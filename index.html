@@ -57,7 +57,7 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--tx);min-h
 .booking-map-col{position:sticky;top:57px;height:calc(100vh - 57px);display:flex;flex-direction:column;overflow-y:auto;}
 
 /* form */
-.bform{padding:28px 28px 80px;}
+.bform{padding:28px 28px 160px;}
 .step-bar{display:flex;align-items:center;gap:0;margin-bottom:28px;}
 .st{display:flex;align-items:center;gap:8px;}
 .st-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--b2);color:var(--muted);background:var(--surf);transition:all .3s;flex-shrink:0;}
@@ -476,7 +476,7 @@ body{font-size:15px;line-height:1.5;}
   .crm-detail{display:none;}
 }
 @media(max-width:600px){
-  .bform{padding:18px 16px 60px;}
+  .bform{padding:18px 16px 160px;}
   .fgrid-2,.fgrid-3{grid-template-columns:1fr;}
   .city-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
 }
@@ -2121,7 +2121,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   КНОПКА ДЗВІНКА
 ═══════════════════════════════════════════════ -->
 <style>
-.call-float{position:fixed;bottom:28px;right:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+.call-float{position:fixed;bottom:90px;right:16px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+@media(max-width:600px){.call-float{bottom:80px;right:12px;}}
+@media(max-width:600px){.call-btn{padding:10px 14px 10px 10px;}.call-icon-wrap{width:34px;height:34px;}.call-icon{font-size:16px;}.call-label{font-size:13px;}.call-sub{font-size:10px;}}
 .call-bubble{background:linear-gradient(135deg,#0d1a2e,#111827);border:1px solid rgba(62,207,122,.3);border-radius:16px;border-bottom-right-radius:4px;padding:13px 16px;max-width:270px;font-size:13px;line-height:1.6;color:#eef0f8;box-shadow:0 8px 32px rgba(0,0,0,.45);display:none;animation:bubbleIn .3s ease;}
 .call-bubble.vis{display:block;}
 .call-bubble strong{color:#3ecf7a;}
