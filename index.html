@@ -2118,8 +2118,576 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 <!-- ═══════════════════════════════════════════════
-  VAPI.AI — ВАЛЕРІЙ ШІ-АСИСТЕНТ
+  КНОПКА ДЗВІНКА
 ═══════════════════════════════════════════════ -->
+<style>
+.call-float {
+  position: fixed;
+  bottom: 28px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* Bubble */
+.call-bubble {
+  background: linear-gradient(135deg, #0d1a2e, #111827);
+  border: 1px solid rgba(62, 207, 122, .3);
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+  padding: 13px 16px;
+  max-width: 270px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #eef0f8;
+  box-shadow: 0 8px 32px rgba(0,0,0,.45);
+  display: none;
+  animation: bubbleIn .3s ease;
+}
+.call-bubble.vis { display: block; }
+.call-bubble strong { color: #3ecf7a; }
+@keyframes bubbleIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Main call button */
+.call-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #0f7a3a, #0a5c2b);
+  border: none;
+  border-radius: 50px;
+  padding: 13px 22px 13px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 6px 28px rgba(62,207,122,.35), 0 2px 8px rgba(0,0,0,.4);
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+}
+.call-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.07);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.call-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(62,207,122,.45); }
+.call-btn:hover::before { opacity: 1; }
+.call-btn:active { transform: translateY(0); }
+
+/* Phone icon circle */
+.call-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: ringPulse 2.5s ease infinite;
+}
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(62,207,122,.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(62,207,122,.0); }
+}
+.call-icon { font-size: 20px; animation: ringShake 2.5s ease infinite; }
+@keyframes ringShake {
+  0%,100% { transform: rotate(0deg); }
+  10%      { transform: rotate(-15deg); }
+  20%      { transform: rotate(15deg); }
+  30%      { transform: rotate(-10deg); }
+  40%      { transform: rotate(0deg); }
+}
+
+.call-text { display: flex; flex-direction: column; gap: 1px; }
+.call-label { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -.01em; }
+.call-sub   { font-size: 11px; color: rgba(255,255,255,.7); font-weight: 500; }
+</style>
+
+<div class="call-float">
+  <div class="call-bubble" id="callBubble">
+    👋 Привіт! Це <strong>TransLine</strong>.<br>
+    Зателефонуйте нам — наш консультант відповість і допоможе з бронюванням або будь-яким запитанням. 🚌
+  </div>
+  <a class="call-btn" href="tel:+380660121041" id="callBtn"
+     onmouseenter="showBubble()" ontouchstart="showBubble()">
+    <div class="call-icon-wrap">
+      <span class="call-icon">📞</span>
+    </div>
+    <div class="call-text">
+      <div class="call-label">Зателефонувати</div>
+      <div class="call-sub">+38 066 012 10 41</div>
+    </div>
+  </a>
+</div>
+
+<script>
+let bubbleTimer = null;
+function showBubble() {
+  const b = document.getElementById('callBubble');
+  b.classList.add('vis');
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => b.classList.remove('vis'), 5000);
+}
+// Auto show after 5 sec
+setTimeout(() => showBubble(), 5000);
+</script>
+</body>
+</html>
+
+<style>
+.valery-float{position:fixed;bottom:24px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+
+.valery-bubble{
+  background:linear-gradient(135deg,#0d1a2e,#111827);
+  border:1px solid rgba(66,133,244,.35);border-radius:16px;border-bottom-right-radius:4px;
+  padding:14px 16px;max-width:290px;font-size:13px;line-height:1.6;color:var(--tx);
+  box-shadow:0 8px 32px rgba(0,0,0,.45);animation:slideUp .3s ease;display:none;
+}
+.valery-bubble.vis{display:block;}
+.valery-bubble strong{color:#4285f4;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* Google colors ring */
+.valery-btn{
+  display:flex;align-items:center;gap:11px;
+  background:linear-gradient(135deg,#0f1a2e,#1a2540);
+  border:2px solid transparent;
+  border-radius:50px;
+  padding:11px 18px 11px 12px;cursor:pointer;
+  background-clip:padding-box;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);
+  transition:all .25s;user-select:none;position:relative;
+}
+.valery-btn::before{
+  content:'';position:absolute;inset:-2px;border-radius:52px;z-index:-1;
+  background:linear-gradient(135deg,#4285f4,#34a853,#fbbc05,#ea4335);
+  opacity:.7;transition:opacity .3s;
+}
+.valery-btn:hover::before{opacity:1;}
+.valery-btn.active-call::before{animation:googleSpin 2s linear infinite;}
+.valery-btn.connecting::before{opacity:.5;animation:googleSpin 1s linear infinite;}
+@keyframes googleSpin{from{filter:hue-rotate(0deg);}to{filter:hue-rotate(360deg);}}
+
+.valery-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,#4285f4,#34a853);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  position:relative;flex-shrink:0;
+}
+.valery-avatar.talking{animation:talkBounce .4s ease infinite alternate;}
+@keyframes talkBounce{from{transform:scale(1);}to{transform:scale(1.08);}}
+
+.valery-online-dot{
+  position:absolute;bottom:1px;right:1px;width:11px;height:11px;
+  background:#34a853;border:2px solid #0b0d13;border-radius:50%;
+}
+.valery-online-dot.busy{background:#ea4335;}
+.valery-online-dot.connecting{background:#fbbc05;animation:dotBlink .5s infinite;}
+@keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.valery-text{display:flex;flex-direction:column;gap:1px;}
+.valery-name{font-size:14px;font-weight:800;color:var(--tx);}
+.valery-sub{font-size:11px;color:#34a853;font-weight:600;}
+.valery-sub.busy{color:#ea4335;}
+.valery-sub.connecting{color:#fbbc05;}
+
+/* Sound wave */
+.sound-wave{display:none;align-items:center;gap:2px;height:18px;margin-left:2px;}
+.sound-wave.vis{display:flex;}
+.sw-bar{width:3px;border-radius:2px;background:#4285f4;}
+.sw-bar:nth-child(1){animation:wave .7s infinite 0.0s;}
+.sw-bar:nth-child(2){animation:wave .7s infinite 0.1s;}
+.sw-bar:nth-child(3){animation:wave .7s infinite 0.2s;}
+.sw-bar:nth-child(4){animation:wave .7s infinite 0.3s;}
+.sw-bar:nth-child(5){animation:wave .7s infinite 0.4s;}
+@keyframes wave{0%,100%{height:3px;opacity:.3;}50%{height:18px;opacity:1;}}
+
+.valery-end-btn{
+  background:rgba(234,67,53,.15);border:1.5px solid rgba(234,67,53,.4);
+  border-radius:50px;padding:8px 18px;font-size:12px;font-weight:800;color:#ea4335;
+  cursor:pointer;display:none;transition:all .2s;
+}
+.valery-end-btn.vis{display:block;}
+.valery-end-btn:hover{background:rgba(234,67,53,.3);}
+
+/* Gemini badge */
+.gemini-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9px;font-weight:800;letter-spacing:.05em;
+  background:linear-gradient(90deg,#4285f4,#34a853,#fbbc05,#ea4335);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-top:1px;
+}
+
+/* Status bar */
+.valery-status-bar{
+  display:none;
+  background:var(--surf2);border:1px solid var(--b2);border-radius:10px;
+  padding:8px 14px;font-size:11px;color:var(--muted);
+  max-width:240px;text-align:center;
+}
+.valery-status-bar.vis{display:block;}
+</style>
+
+<div class="valery-float" id="valeryFloat">
+  <div class="valery-bubble" id="valeryBubble">
+    👋 Я <strong>Валерій</strong> — голосовий ШІ на базі <strong>Google Gemini</strong>.<br>
+    Натисніть кнопку — поговоримо голосом про маршрути, ціни або забронюємо поїздку прямо зараз.<br><br>
+    Хочете <strong>живого оператора</strong>? Просто скажіть — переключу миттєво. 📞
+  </div>
+  <div class="valery-status-bar" id="valeryStatus">⏳ Підключення до Gemini...</div>
+  <button class="valery-end-btn" id="valeryEndBtn" onclick="endValeryCall()">📵 Завершити</button>
+  <div class="valery-btn" id="valeryBtn" onclick="toggleValeryCall()">
+    <div class="valery-avatar" id="valeryAvatar">
+      🤖
+      <div class="valery-online-dot" id="valeryDot"></div>
+    </div>
+    <div class="valery-text">
+      <div class="valery-name">Валерій</div>
+      <div class="gemini-badge">✦ Powered by Gemini Live</div>
+      <div class="valery-sub" id="valerySub">● Натисніть для голосового дзвінка</div>
+    </div>
+    <div class="sound-wave" id="soundWave">
+      <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
+      <div class="sw-bar"></div><div class="sw-bar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  GEMINI LIVE API — ВАЛЕРІЙ
+// ═══════════════════════════════════════════════
+const GEMINI_API_KEY  = 'gen-lang-client-0550698290';
+const GEMINI_MODEL    = 'models/gemini-2.0-flash-exp';
+const HUMAN_PHONE     = '+380660121041';
+const WS_URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+
+const VALERY_PROMPT = `Ти — Валерій, голосовий ШІ-асистент транспортної компанії TransLine. 
+Говориш ВИКЛЮЧНО українською мовою. Голос спокійний, ввічливий, компетентний.
+Ти штучний інтелект і маєш чесно про це говорити.
+
+САМОПРЕЗЕНТАЦІЯ (обов'язково на початку кожного дзвінка):
+"Доброго дня! Мене звати Валерій, я штучний інтелект компанії TransLine. Я допоможу вам краще і точніше ніж звичайний оператор. Якщо захочете поговорити з живою людиною — скажіть, і я миттєво переключу. Чим можу допомогти?"
+
+МАРШРУТИ:
+Україна (Івано-Франківськ о 08:00, Чернівці о 07:00, Львів о 10:00) → Польща (Краків) → Чехія (Острава, Прага) → Німеччина (Дрезден, Лейпциг, Ерфурт, Франкфурт, Дармштадт, Мангайм, Гайдельберг, Карлсруе, Штутгарт, Фрайбург).
+Відправлення з України — щосуботи. Зворотній напрямок — понеділок-вівторок.
+
+ГОЛОВНА ПЕРЕВАГА TransLine — пояснюй це при кожній нагоді:
+Інші перевізники відхиляються від траси на 15-30 кілометрів щоб завезти чужу посилку або забрати пасажира з села. Клієнт сидить і чекає невідомо скільки. У TransLine максимальне відхилення — 7 кілометрів. Тільки великі міста. Зупинки на заправках кожні 3 години строго 15 хвилин — ви знаєте точний час.
+
+ЦІНИ (євро, в один бік):
+Краків 45, Острава 55, Прага 70, Дрезден 90, Лейпциг 95, Ерфурт 100, Франкфурт 120, Дармштадт 115, Мангайм 115, Гайдельберг 115, Карлсруе 120, Штутгарт 125, Фрайбург 130.
+Дитяче місце: знижка 30%. Багаж до 20 кг включено. Посилки окремо.
+
+БРОНЮВАННЯ — якщо хочуть забронювати:
+Запитай: місто відправлення, місто призначення, дата поїздки, ім'я, телефон, кількість пасажирів.
+Потім скажи: "Дякую! Ваші дані записано. Наш оператор зв'яжеться з вами для підтвердження."
+
+ПРОДАЖ закривається за 24 години до відправлення.
+
+ПЕРЕКЛЮЧЕННЯ НА ЛЮДИНУ:
+Якщо клієнт каже "хочу людину", "живий оператор", "переключи" — відповідай: "Звісно! Зараз з'єдную вас з оператором. Очікуйте, будь ласка." і виклич функцію transferToHuman.
+
+Відповідай стисло і природно. Не перераховуй пункти списком вголос. Максимум 2-3 речення за раз.`;
+
+// ── State ──
+let ws = null;
+let audioCtx = null;
+let mediaStream = null;
+let processorNode = null;
+let sourceNode = null;
+let isCallActive = false;
+let audioQueue = [];
+let isPlayingAudio = false;
+let bubbleShown = false;
+
+// ── UI helpers ──
+function setValeryUI(state){
+  const btn  = document.getElementById('valeryBtn');
+  const sub  = document.getElementById('valerySub');
+  const dot  = document.getElementById('valeryDot');
+  const end  = document.getElementById('valeryEndBtn');
+  const wave = document.getElementById('soundWave');
+  const bar  = document.getElementById('valeryStatus');
+  const av   = document.getElementById('valeryAvatar');
+
+  btn.classList.remove('active-call','connecting');
+  dot.classList.remove('busy','connecting');
+  end.classList.remove('vis');
+  wave.classList.remove('vis');
+  sub.classList.remove('busy','connecting');
+  bar.classList.remove('vis');
+  av.classList.remove('talking');
+
+  if(state === 'connecting'){
+    btn.classList.add('connecting');
+    dot.classList.add('connecting');
+    sub.classList.add('connecting');
+    sub.textContent = '⏳ Підключення...';
+    bar.textContent = '⏳ З\'єднуємось з Gemini...';
+    bar.classList.add('vis');
+  } else if(state === 'active'){
+    btn.classList.add('active-call');
+    dot.classList.add('busy');
+    sub.classList.add('busy');
+    sub.textContent = '🔴 Розмова активна';
+    end.classList.add('vis');
+  } else if(state === 'talking'){
+    btn.classList.add('active-call');
+    dot.classList.add('busy');
+    sub.textContent = '💬 Валерій говорить...';
+    wave.classList.add('vis');
+    av.classList.add('talking');
+    end.classList.add('vis');
+  } else {
+    sub.textContent = '● Натисніть для голосового дзвінка';
+  }
+}
+
+// ── Main toggle ──
+function toggleValeryCall(){
+  if(!bubbleShown){
+    bubbleShown = true;
+    const b = document.getElementById('valeryBubble');
+    b.classList.add('vis');
+    setTimeout(()=>b.classList.remove('vis'), 6000);
+    return;
+  }
+  isCallActive ? endValeryCall() : startValeryCall();
+}
+
+// ── Start call ──
+async function startValeryCall(){
+  setValeryUI('connecting');
+  try {
+    // Get microphone
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio:{ sampleRate:16000, channelCount:1, echoCancellation:true, noiseSuppression:true } });
+
+    // Open WebSocket
+    ws = new WebSocket(WS_URL);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = () => {
+      // Send setup
+      ws.send(JSON.stringify({
+        setup:{
+          model: GEMINI_MODEL,
+          generation_config:{
+            response_modalities:['AUDIO'],
+            speech_config:{
+              voice_config:{
+                prebuilt_voice_config:{ voice_name:'Charon' }
+              }
+            }
+          },
+          system_instruction:{ parts:[{ text: VALERY_PROMPT }] },
+          tools:[{
+            function_declarations:[{
+              name:'transferToHuman',
+              description:'Переключити клієнта на живого оператора',
+              parameters:{ type:'OBJECT', properties:{}, required:[] }
+            },{
+              name:'createBooking',
+              description:'Записати бронювання клієнта',
+              parameters:{
+                type:'OBJECT',
+                properties:{
+                  name:{ type:'STRING', description:'ПІБ пасажира' },
+                  phone:{ type:'STRING', description:'Телефон' },
+                  from_city:{ type:'STRING', description:'Місто відправлення' },
+                  to_city:{ type:'STRING', description:'Місто призначення' },
+                  date:{ type:'STRING', description:'Дата поїздки' },
+                  passengers:{ type:'NUMBER', description:'Кількість пасажирів' }
+                },
+                required:['name','phone','from_city','to_city']
+              }
+            }]
+          }]
+        }
+      }));
+
+      isCallActive = true;
+      setValeryUI('active');
+      startMicCapture();
+    };
+
+    ws.onmessage = (e) => handleGeminiMessage(e);
+    ws.onerror   = (e) => { console.error('WS error',e); endValeryCall(); };
+    ws.onclose   = ()  => { if(isCallActive) endValeryCall(); };
+
+  } catch(err){
+    console.error('Call error:', err);
+    alert('Не вдалось отримати доступ до мікрофону. Перевірте дозволи браузера.');
+    setValeryUI('idle');
+  }
+}
+
+// ── Mic capture → PCM16 → Gemini ──
+function startMicCapture(){
+  audioCtx = new AudioContext({ sampleRate:16000 });
+  sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+
+  processorNode = audioCtx.createScriptProcessor(4096, 1, 1);
+  processorNode.onaudioprocess = (e) => {
+    if(!ws || ws.readyState !== WebSocket.OPEN) return;
+    const float32 = e.inputBuffer.getChannelData(0);
+    const pcm16 = float32ToPCM16(float32);
+    const base64 = arrayBufferToBase64(pcm16.buffer);
+    ws.send(JSON.stringify({
+      realtime_input:{
+        media_chunks:[{ data:base64, mime_type:'audio/pcm;rate=16000' }]
+      }
+    }));
+  };
+  sourceNode.connect(processorNode);
+  processorNode.connect(audioCtx.destination);
+}
+
+// ── Handle Gemini responses ──
+function handleGeminiMessage(event){
+  let msg;
+  try { msg = JSON.parse(event.data); } catch { return; }
+
+  // Audio response
+  const parts = msg?.serverContent?.modelTurn?.parts || [];
+  parts.forEach(part => {
+    if(part.inlineData?.mimeType?.startsWith('audio/pcm')){
+      const audioData = base64ToArrayBuffer(part.inlineData.data);
+      audioQueue.push(audioData);
+      if(!isPlayingAudio) playNextAudio();
+      setValeryUI('talking');
+    }
+    if(part.text){
+      console.log('Валерій:', part.text);
+    }
+  });
+
+  // Turn complete
+  if(msg?.serverContent?.turnComplete){
+    setTimeout(()=>{ if(!isPlayingAudio) setValeryUI('active'); }, 500);
+  }
+
+  // Function calls
+  const calls = msg?.toolCall?.functionCalls || [];
+  calls.forEach(call => {
+    if(call.name === 'transferToHuman'){
+      handleTransferToHuman();
+    }
+    if(call.name === 'createBooking'){
+      handleCreateBooking(call.args);
+    }
+  });
+}
+
+// ── Play audio queue ──
+function playNextAudio(){
+  if(audioQueue.length === 0){ isPlayingAudio = false; return; }
+  isPlayingAudio = true;
+  const pcmData = audioQueue.shift();
+  const playCtx = new AudioContext({ sampleRate:24000 });
+  const float32 = pcm16ToFloat32(new Int16Array(pcmData));
+  const buffer = playCtx.createBuffer(1, float32.length, 24000);
+  buffer.getChannelData(0).set(float32);
+  const src = playCtx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(playCtx.destination);
+  src.onended = () => { playCtx.close(); playNextAudio(); };
+  src.start();
+}
+
+// ── Function handlers ──
+function handleTransferToHuman(){
+  endValeryCall();
+  setTimeout(()=>{
+    if(confirm('Переключити на живого оператора?\n+380660121041')){
+      window.location.href = 'tel:+380660121041';
+    }
+  }, 500);
+}
+
+function handleCreateBooking(args){
+  const booking = {
+    id: 'TL-V-' + Math.random().toString(36).slice(2,6).toUpperCase(),
+    name: args.name || 'Голосове бронювання',
+    phone: args.phone || '—',
+    fromCity: args.from_city || '—',
+    toCity: args.to_city || '—',
+    date: args.date || 'Уточнити',
+    route: (args.from_city||'?') + ' → ' + (args.to_city||'?'),
+    adults: args.passengers || 1,
+    children: 0, bags: 0, parcel: 'Ні',
+    price: '—', status: 'pending',
+    note: '📞 Створено голосовим ШІ Валерієм',
+    fromStreet:'', toStreet:'', wa:'', email:'', tg:'',
+    fromZip:'', toZip:'', fromNote:'', recipient:'', recPhone:'',
+    fromLat:0, fromLng:0, toLat:0, toLng:0
+  };
+  if(typeof localBookings !== 'undefined'){
+    localBookings.unshift(booking);
+    if(typeof renderCRMTable === 'function') renderCRMTable();
+  }
+  console.log('✅ Бронювання створено Валерієм:', booking);
+}
+
+// ── End call ──
+function endValeryCall(){
+  isCallActive = false;
+  if(processorNode){ processorNode.disconnect(); processorNode = null; }
+  if(sourceNode){ sourceNode.disconnect(); sourceNode = null; }
+  if(audioCtx){ audioCtx.close(); audioCtx = null; }
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream = null; }
+  if(ws){ ws.close(); ws = null; }
+  audioQueue = []; isPlayingAudio = false;
+  setValeryUI('idle');
+}
+
+// ── Audio utils ──
+function float32ToPCM16(float32){
+  const int16 = new Int16Array(float32.length);
+  for(let i=0;i<float32.length;i++) int16[i] = Math.max(-32768, Math.min(32767, float32[i]*32768));
+  return int16;
+}
+function pcm16ToFloat32(int16){
+  const float32 = new Float32Array(int16.length);
+  for(let i=0;i<int16.length;i++) float32[i] = int16[i]/32768;
+  return float32;
+}
+function arrayBufferToBase64(buffer){
+  const bytes = new Uint8Array(buffer);
+  let bin = '';
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function base64ToArrayBuffer(base64){
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// Show bubble after 4 sec
+setTimeout(()=>{
+  if(!bubbleShown && !isCallActive){
+    const b = document.getElementById('valeryBubble');
+    b.classList.add('vis');
+    setTimeout(()=>b.classList.remove('vis'), 8000);
+  }
+}, 4000);
+</script>
+</body>
+</html>
+
 <script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.umd.js"></script>
 
 <!-- VALERY STYLES -->
