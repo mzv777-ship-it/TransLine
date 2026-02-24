@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransLine UA→DE | Booking + CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg:#0b0d13;--surf:#13161f;--surf2:#1a1e2a;--surf3:#222737;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);--b3:rgba(255,255,255,.18);
+  --tx:#eef0f8;--muted:#6b7491;--sub:#9099b8;
+  --accent:#4f8ef7;--accent2:#7aaeff;
+  --gold:#f5c542;--green:#3ecf7a;--red:#ff5252;--orange:#ff9f2e;
+  --r:12px;--r2:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--surf3);border-radius:10px;}
+
+/* ── APP SHELL ── */
+.app-shell{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;border-bottom:1px solid var(--b1);
+  background:rgba(11,13,19,.92);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:200;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-box{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.logo-name{font-size:17px;font-weight:800;color:var(--tx);letter-spacing:-.02em;}
+.logo-name span{color:var(--gold);}
+.view-switcher{display:flex;gap:4px;background:var(--surf2);border-radius:10px;padding:4px;}
+.vsw{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:none;background:none;color:var(--muted);}
+.vsw.active{background:var(--accent);color:#fff;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(62,207,122,.2);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(62,207,122,.2);}50%{box-shadow:0 0 0 6px rgba(62,207,122,.08);}}
+.status-txt{font-size:12px;font-weight:600;color:var(--green);}
+
+/* ── PANELS ── */
+.panel{display:none;flex:1;}
+.panel.active{display:flex;}
+
+/* ═══════════════════════════════════════
+   CLIENT BOOKING PANEL (LEFT+RIGHT SPLIT)
+═══════════════════════════════════════ */
+.booking-layout{display:grid;grid-template-columns:520px 1fr;width:100%;min-height:calc(100vh - 57px);}
+.booking-form-col{overflow-y:auto;border-right:1px solid var(--b1);}
+.booking-map-col{position:sticky;top:57px;height:calc(100vh - 57px);display:flex;flex-direction:column;overflow-y:auto;}
+
+/* form */
+.bform{padding:28px 28px 80px;}
+.step-bar{display:flex;align-items:center;gap:0;margin-bottom:28px;}
+.st{display:flex;align-items:center;gap:8px;}
+.st-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--b2);color:var(--muted);background:var(--surf);transition:all .3s;flex-shrink:0;}
+.st-circle.act{background:var(--accent);border-color:var(--accent);color:#fff;}
+.st-circle.don{background:var(--green);border-color:var(--green);color:#fff;}
+.st-lbl{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color .3s;}
+.st.act .st-lbl{color:var(--tx);}
+.st.don .st-lbl{color:var(--green);}
+.st-line{flex:1;height:1px;background:var(--b2);margin:0 8px;min-width:20px;}
+.st-line.don{background:var(--green);}
+
+/* section */
+.fsec{margin-bottom:24px;}
+.fsec-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.fsec-title::after{content:'';flex:1;height:1px;background:var(--b1);}
+
+/* dir toggle */
+.dir-grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+@media(max-width:700px){.dir-grid6{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:420px){.dir-grid6{grid-template-columns:1fr 1fr;}}
+.dir-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.dir-card{background:var(--surf);border:2px solid var(--b2);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .2s;}
+.dir-card:hover{border-color:rgba(79,142,247,.35);}
+.dir-card.sel{border-color:var(--accent);background:rgba(79,142,247,.07);}
+.dc-top{font-size:18px;margin-bottom:5px;}
+.dc-name{font-size:13px;font-weight:700;}
+.dc-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* route stops */
+.route-strip{
+  background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);
+  padding:16px 18px;margin-bottom:18px;overflow-x:auto;scrollbar-width:thin;
+}
+.stops-row{display:flex;align-items:center;gap:0;min-width:max-content;}
+.stop-node{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .15s;}
+.stop-node:hover{transform:translateY(-2px);}
+.sn-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);border:2px solid var(--bg);margin-bottom:6px;transition:all .2s;}
+.sn-dot.from{background:var(--green);box-shadow:0 0 0 3px rgba(62,207,122,.25);}
+.sn-dot.to{background:var(--gold);box-shadow:0 0 0 3px rgba(245,197,66,.25);}
+.sn-dot.selected{background:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,.25);}
+.sn-name{font-size:9px;font-weight:700;color:var(--muted);text-align:center;max-width:50px;line-height:1.2;transition:color .2s;}
+.stop-node.from .sn-name,.stop-node.to .sn-name{color:var(--tx);}
+.sline{flex:1;min-width:18px;height:2px;background:var(--b2);margin-bottom:18px;}
+.sline.cross{background:repeating-linear-gradient(90deg,var(--muted) 0,var(--muted) 3px,transparent 3px,transparent 7px);}
+
+/* city selector */
+.city-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px;}
+.city-chip{
+  background:var(--surf);border:2px solid var(--b2);border-radius:var(--r2);
+  padding:10px 12px;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:8px;
+}
+.city-chip:hover{border-color:rgba(79,142,247,.35);}
+.city-chip.sel-from{border-color:var(--green);background:rgba(62,207,122,.07);}
+.city-chip.sel-to{border-color:var(--gold);background:rgba(245,197,66,.07);}
+.cc-flag{font-size:15px;}
+.cc-name{font-size:12px;font-weight:700;line-height:1.2;}
+.cc-pop{font-size:10px;color:var(--muted);}
+
+/* dates */
+.date-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:14px;}
+.date-card{background:var(--surf);border:2px solid var(--b2);border-radius:var(--r2);padding:12px;cursor:pointer;transition:all .15s;text-align:center;}
+.date-card:hover{border-color:rgba(79,142,247,.35);}
+.date-card.sel{border-color:var(--accent);background:rgba(79,142,247,.1);}
+.date-card.full{opacity:.3;pointer-events:none;}
+.dc-day{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.dc-num{font-size:20px;font-weight:800;margin:3px 0;letter-spacing:-.02em;}
+.dc-mon{font-size:11px;color:var(--muted);}
+.dc-seats{display:inline-block;margin-top:7px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.s-ok{background:rgba(62,207,122,.15);color:var(--green);}
+.s-few{background:rgba(245,197,66,.15);color:var(--gold);}
+.s-no{background:rgba(255,82,82,.15);color:var(--red);}
+
+/* address block */
+.addr-block{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+.addr-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.addr-label.from-lbl{color:var(--green);}
+.addr-label.to-lbl{color:var(--gold);}
+.fgrid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.fgrid-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+.fgrid-full{margin-bottom:10px;}
+.flabel{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.finput{
+  background:var(--bg);border:1px solid var(--b2);border-radius:var(--r2);
+  color:var(--tx);font-family:'Manrope',sans-serif;font-size:13px;font-weight:500;
+  padding:10px 12px;width:100%;outline:none;transition:border-color .15s;
+}
+.finput:focus{border-color:var(--accent);}
+.finput::placeholder{color:var(--muted);font-weight:400;}
+.finput.err{border-color:var(--red);}
+select.finput option{background:var(--surf);}
+
+/* passenger counter */
+.pass-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surf);border:1px solid var(--b2);border-radius:var(--r2);margin-bottom:8px;}
+.pr-name{font-size:13px;font-weight:600;}
+.pr-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.counter{display:flex;align-items:center;gap:12px;}
+.cnt{width:30px;height:30px;border-radius:7px;background:var(--surf2);border:1px solid var(--b2);color:var(--tx);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;}
+.cnt:hover{background:var(--accent);border-color:var(--accent);}
+.cnt:disabled{opacity:.3;pointer-events:none;}
+.cnt-n{font-size:16px;font-weight:800;min-width:20px;text-align:center;}
+
+/* parcel toggle */
+.parcel-toggle{display:flex;align-items:center;gap:12px;background:var(--surf);border:2px solid var(--b2);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .2s;margin-bottom:10px;}
+.parcel-toggle.on{border-color:var(--accent);background:rgba(79,142,247,.06);}
+.pt-icon{font-size:20px;}
+.pt-info{flex:1;}
+.pt-name{font-size:13px;font-weight:700;}
+.pt-sub{font-size:11px;color:var(--muted);}
+.tog-sw{width:40px;height:22px;background:var(--surf2);border-radius:11px;position:relative;transition:background .2s;flex-shrink:0;}
+.tog-sw::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:var(--muted);top:3px;left:3px;transition:all .2s;}
+.on .tog-sw{background:var(--accent);}
+.on .tog-sw::after{left:21px;background:#fff;}
+.parcel-form{display:none;background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.parcel-form.vis{display:block;}
+
+/* price summary */
+.price-box{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.pb-head{padding:12px 16px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--b1);}
+.pb-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--b1);font-size:13px;}
+.pb-row:last-child{border-bottom:none;}
+.pb-lbl{color:var(--muted);}
+.pb-val{font-weight:700;}
+.pb-total{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--surf2);font-size:17px;font-weight:800;}
+.pb-tot-price{color:var(--gold);}
+
+/* contact */
+.contact-block{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+
+/* payment methods */
+.pay-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pay-m{background:var(--surf);border:2px solid var(--b2);border-radius:var(--r2);padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;}
+.pay-m:hover{border-color:rgba(79,142,247,.35);}
+.pay-m.sel{border-color:var(--accent);background:rgba(79,142,247,.08);}
+.pay-icon{font-size:20px;margin-bottom:3px;}
+.pay-name{font-size:11px;font-weight:700;color:var(--muted);}
+.pay-m.sel .pay-name{color:var(--tx);}
+
+/* buttons */
+.btn-p{width:100%;padding:14px;background:var(--accent);color:#fff;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:var(--r);cursor:pointer;transition:all .2s;letter-spacing:-.01em;}
+.btn-p:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,142,247,.3);}
+.btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-s{padding:12px 20px;background:var(--surf2);color:var(--muted);font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;border:1px solid var(--b2);border-radius:var(--r);cursor:pointer;transition:all .15s;}
+.btn-s:hover{color:var(--tx);}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn-p{flex:1;}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;margin-bottom:14px;}
+.pill-g{background:rgba(62,207,122,.1);color:var(--green);border:1px solid rgba(62,207,122,.2);}
+.pill-b{background:rgba(79,142,247,.1);color:var(--accent2);border:1px solid rgba(79,142,247,.2);}
+
+/* ── MAP COLUMN ── */
+.map-header{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.mh-title{font-size:13px;font-weight:700;}
+.mh-info{font-size:11px;color:var(--muted);}
+#map{width:100%;height:320px;flex-shrink:0;}
+.map-footer{padding:12px 18px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surf);}
+.mf-stat{font-size:11px;color:var(--muted);}
+.mf-stat strong{color:var(--tx);font-weight:700;}
+.open-gmaps{font-size:11px;font-weight:700;color:var(--accent2);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);padding:5px 12px;border-radius:6px;cursor:pointer;text-decoration:none;}
+
+/* ── SUCCESS ── */
+.success-wrap{text-align:center;padding:60px 28px;}
+.suc-icon{width:72px;height:72px;background:rgba(62,207,122,.1);border:2px solid rgba(62,207,122,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 22px;}
+.suc-title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;}
+.suc-sub{font-size:14px;color:var(--muted);margin-bottom:28px;max-width:360px;margin-left:auto;margin-right:auto;line-height:1.6;}
+.ticket-card{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);padding:22px;max-width:400px;margin:0 auto 22px;text-align:left;position:relative;overflow:hidden;}
+.ticket-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--accent));}
+.tk-route{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.tk-city{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.tk-arrow{color:var(--muted);}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.tkg-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.tkg-val{font-size:13px;font-weight:700;}
+.tk-code-row{margin-top:16px;padding-top:14px;border-top:1px dashed var(--b2);display:flex;align-items:center;justify-content:space-between;}
+.tk-code{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;letter-spacing:.1em;color:var(--accent2);}
+.tk-tg{font-size:11px;color:var(--muted);background:var(--surf2);padding:5px 10px;border-radius:6px;}
+
+/* ═══════════════════════════════════════
+   CRM PANEL
+═══════════════════════════════════════ */
+.crm-layout{display:grid;grid-template-columns:1fr 400px;width:100%;min-height:calc(100vh - 57px);}
+.crm-main{overflow-y:auto;border-right:1px solid var(--b1);}
+.crm-detail{overflow-y:auto;background:var(--surf);}
+
+/* crm toolbar */
+.crm-toolbar{padding:18px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surf);}
+.crm-title{font-size:16px;font-weight:800;margin-right:auto;}
+.crm-stat{font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;white-space:nowrap;}
+.cs-total{background:rgba(79,142,247,.1);color:var(--accent2);}
+.cs-today{background:rgba(62,207,122,.1);color:var(--green);}
+.cs-pend{background:rgba(245,197,66,.1);color:var(--gold);}
+.crm-search{background:var(--bg);border:1px solid var(--b2);border-radius:var(--r2);color:var(--tx);font-family:'Manrope',sans-serif;font-size:13px;padding:8px 14px;outline:none;width:200px;transition:border-color .15s;}
+.crm-search:focus{border-color:var(--accent);}
+.crm-search::placeholder{color:var(--muted);}
+
+/* filter tabs */
+.crm-filters{padding:10px 20px;border-bottom:1px solid var(--b1);display:flex;gap:4px;background:var(--surf);}
+.crf{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;transition:all .15s;}
+.crf:hover{background:var(--surf2);color:var(--tx);}
+.crf.act{background:var(--accent);color:#fff;}
+
+/* booking table */
+.crm-table{width:100%;border-collapse:collapse;}
+.crm-table th{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 16px;border-bottom:2px solid var(--b2);white-space:nowrap;position:sticky;top:0;background:var(--surf2);z-index:1;}
+.crm-table td{padding:12px 16px;border-bottom:1px solid var(--b1);font-size:13px;vertical-align:middle;}
+.crm-table tr.sel-row td{background:rgba(79,142,247,.06);}
+.crm-table tr:hover td{background:rgba(255,255,255,.02);cursor:pointer;}
+.booking-id{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--accent2);}
+.passenger-name{font-weight:700;}
+.route-cell{display:flex;align-items:center;gap:5px;font-size:12px;}
+.route-arr{color:var(--muted);}
+.status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.st-confirmed{background:rgba(62,207,122,.15);color:var(--green);}
+.st-pending{background:rgba(245,197,66,.15);color:var(--gold);}
+.st-cancelled{background:rgba(255,82,82,.15);color:var(--red);}
+.st-onboard{background:rgba(79,142,247,.15);color:var(--accent2);}
+td.price-col{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:13px;}
+.map-btn{font-size:11px;font-weight:700;color:var(--accent2);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);padding:4px 10px;border-radius:6px;cursor:pointer;text-decoration:none;white-space:nowrap;}
+.flag-ico{font-size:14px;}
+
+/* crm detail panel */
+.crm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);text-align:center;padding:40px;}
+.crm-empty-icon{font-size:40px;margin-bottom:14px;opacity:.4;}
+.crm-empty-text{font-size:14px;}
+.detail-header{padding:18px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.dh-id{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--accent2);}
+.dh-status{}
+.detail-section{padding:18px 20px;border-bottom:1px solid var(--b1);}
+.ds-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.info-row{display:flex;gap:8px;margin-bottom:8px;}
+.ir-label{font-size:11px;color:var(--muted);font-weight:600;min-width:90px;flex-shrink:0;}
+.ir-val{font-size:13px;font-weight:600;flex:1;word-break:break-word;}
+.mini-map{height:200px;border-radius:var(--r2);overflow:hidden;margin-top:10px;border:1px solid var(--b2);}
+.action-row{padding:16px 20px;display:flex;gap:8px;flex-wrap:wrap;}
+.act-btn{flex:1;padding:10px;font-size:12px;font-weight:700;border-radius:var(--r2);cursor:pointer;border:none;transition:all .15s;font-family:'Manrope',sans-serif;}
+.act-conf{background:var(--green);color:#fff;}
+.act-conf:hover{opacity:.85;}
+.act-can{background:var(--surf2);color:var(--red);border:1px solid rgba(255,82,82,.2);}
+.act-can:hover{background:rgba(255,82,82,.1);}
+.act-nav{background:var(--accent);color:#fff;}
+.act-nav:hover{opacity:.85;}
+
+/* ── MOBILE FONT OPTIMIZATION (≈iPhone SE / Samsung A series) ── */
+body{font-size:15px;line-height:1.5;}
+.finput{font-size:16px !important;} /* prevent iOS zoom on input focus */
+.flabel{font-size:13px;font-weight:600;}
+.fsec-title{font-size:14px;font-weight:800;letter-spacing:.01em;}
+.city-chip .cc-name{font-size:14px;}
+.city-chip .cc-pop{font-size:11px;}
+.btn-p,.btn-s{font-size:16px;padding:16px 20px;}
+.date-card .dc-day{font-size:11px;font-weight:700;}
+.date-card .dc-num{font-size:28px;font-weight:900;}
+.date-card .dc-month{font-size:12px;}
+.date-card .dc-seats{font-size:11px;padding:4px 10px;}
+.dc-name{font-size:15px;font-weight:800;}
+.dc-sub{font-size:12px;}
+.dc-top{font-size:18px;}
+
+/* ── PAIN-POINT HERO BANNER (client main screen) ── */
+.hero-pain{
+  background:linear-gradient(135deg,#0d1525 0%,#111827 40%,rgba(79,142,247,.06) 100%);
+  border:1px solid rgba(79,142,247,.2);border-radius:14px;
+  padding:20px 18px;margin-bottom:18px;position:relative;overflow:hidden;
+}
+.hero-pain::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;
+  background:radial-gradient(circle,rgba(79,142,247,.12) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.hero-pain-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(90deg,var(--accent),#7c3aed);
+  color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;
+  padding:4px 11px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;
+}
+.hero-pain-headline{
+  font-size:22px;font-weight:900;line-height:1.25;color:#fff;margin-bottom:8px;
+  letter-spacing:-.02em;
+}
+.hero-pain-headline em{color:var(--gold);font-style:normal;}
+.hero-pain-sub{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6;margin-bottom:14px;}
+.hero-pain-sub strong{color:var(--green);font-weight:700;}
+.hero-pills-row{display:flex;flex-wrap:wrap;gap:7px;}
+.hero-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:5px 11px;font-size:11px;font-weight:700;color:rgba(255,255,255,.8);
+}
+.hero-pill.g{border-color:rgba(62,207,122,.3);background:rgba(62,207,122,.06);color:var(--green);}
+.hero-pill.r{border-color:rgba(255,82,82,.25);background:rgba(255,82,82,.05);color:var(--red);}
+
+/* ── FUEL STOP IN TIMELINE ── */
+.tl-dot.fuel{background:#ff9f2e;box-shadow:0 0 0 3px rgba(255,159,46,.2);}
+.tl-fuel-link{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--orange);text-decoration:none;margin-top:2px;border-bottom:1px dashed rgba(255,159,46,.4);}
+.tl-fuel-link:hover{color:var(--gold);}
+
+/* ── VALERY AI FLOAT BUTTON ── */
+.valery-float{
+  position:fixed;bottom:24px;right:20px;z-index:999;
+  display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+}
+.valery-btn{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#1a1e2a,#222737);
+  border:1.5px solid rgba(62,207,122,.4);border-radius:50px;
+  padding:12px 18px 12px 14px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(62,207,122,.1);
+  text-decoration:none;transition:all .25s;
+}
+.valery-btn:hover{border-color:var(--green);box-shadow:0 8px 40px rgba(62,207,122,.15),0 0 0 1px rgba(62,207,122,.2);}
+.valery-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  position:relative;flex-shrink:0;
+}
+.valery-online{
+  position:absolute;bottom:0;right:0;width:10px;height:10px;
+  background:var(--green);border:2px solid var(--bg);border-radius:50%;
+  animation:pulse 2s infinite;
+}
+.valery-text{display:flex;flex-direction:column;}
+.valery-name{font-size:13px;font-weight:800;color:var(--tx);}
+.valery-sub{font-size:10px;color:var(--green);font-weight:600;}
+.valery-call-badge{
+  background:var(--green);color:#000;
+  font-size:10px;font-weight:900;letter-spacing:.04em;
+  padding:3px 9px;border-radius:10px;flex-shrink:0;text-transform:uppercase;
+}
+.valery-bubble{
+  background:var(--surf2);border:1px solid var(--b2);border-radius:14px;border-bottom-right-radius:4px;
+  padding:12px 15px;max-width:260px;font-size:12px;line-height:1.55;color:var(--tx);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);animation:fadeIn .3s ease;
+  display:none;
+}
+.valery-bubble.vis{display:block;}
+.valery-bubble strong{color:var(--green);}
+
+/* ── BUS FLEET TAB ── */
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px;}
+.bus-card{background:var(--surf);border:1px solid var(--b2);border-radius:12px;overflow:hidden;}
+.bus-card-head{
+  padding:14px 16px;border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.bus-number{font-size:22px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;}
+.bus-name{font-size:13px;font-weight:700;}
+.bus-seats-badge{background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:800;color:var(--accent2);}
+.bus-sched{padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
+.sched-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+.sched-route{font-weight:700;color:var(--tx);}
+.sched-date{color:var(--muted);}
+.sched-avail{font-weight:800;}
+.sched-avail.ok{color:var(--green);}
+.sched-avail.few{color:var(--gold);}
+.sched-avail.full{color:var(--red);}
+.bus-btn-row{padding:10px 16px;border-top:1px solid var(--b1);display:flex;gap:8px;}
+.bus-act-btn{flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;}
+.bus-act-btn.primary{background:var(--accent);color:#fff;}
+.bus-act-btn.sec{background:var(--surf3);color:var(--tx);}
+
+/* ── EXPORT BUTTONS ── */
+.export-row{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b1);flex-wrap:wrap;}
+.exp-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;}
+.exp-btn.csv{background:rgba(62,207,122,.12);color:var(--green);border:1px solid rgba(62,207,122,.25);}
+.exp-btn.xlsx{background:rgba(79,142,247,.12);color:var(--accent2);border:1px solid rgba(79,142,247,.25);}
+.exp-btn.pdf{background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.25);}
+.exp-btn:hover{filter:brightness(1.15);}
+
+/* ── ROUTE BUILDER ── */
+.rb-panel{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.rb-bus-selector{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;}
+.rb-bus{border:1.5px solid var(--b2);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surf);}
+.rb-bus.sel{border-color:var(--gold);background:rgba(245,197,66,.07);}
+.rb-bus-num{font-size:20px;font-weight:900;color:var(--gold);font-family:monospace;}
+.rb-bus-info{font-size:10px;color:var(--muted);margin-top:2px;}
+.ai-route-block{background:var(--surf2);border:1px solid rgba(122,174,255,.2);border-radius:12px;padding:16px;}
+.ai-route-title{font-size:13px;font-weight:800;color:var(--accent2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.passenger-stop{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surf3);border-radius:8px;font-size:12px;}
+.ps-order{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.ps-info{flex:1;}
+.ps-name{font-weight:700;}
+.ps-addr{color:var(--muted);font-size:11px;margin-top:1px;}
+.ps-time{font-family:monospace;font-weight:700;color:var(--gold);flex-shrink:0;}
+
+.ttime-block{background:var(--surf);border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;margin-bottom:16px;animation:fadeIn .3s ease;}
+.ttime-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--b1);background:var(--surf2);}
+.ttime-title{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.ttime-total{font-size:20px;font-weight:800;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:-.02em;}
+.ttime-sub{font-size:10px;color:var(--muted);font-weight:500;margin-top:1px;}
+.ttime-body{padding:16px 18px;}
+.stop-timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;align-items:stretch;gap:12px;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0;}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.tl-dot.dep{background:var(--green);box-shadow:0 0 0 3px rgba(62,207,122,.2);}
+.tl-dot.stop{background:var(--muted);}
+.tl-dot.dest{background:var(--gold);box-shadow:0 0 0 3px rgba(245,197,66,.2);}
+.tl-dot.bord{background:var(--orange);box-shadow:0 0 0 3px rgba(255,159,46,.2);}
+.tl-line{flex:1;width:1.5px;background:var(--b2);margin:2px 0;}
+.tl-right{flex:1;padding-bottom:14px;}
+.tl-city{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.tl-time{font-size:11px;font-weight:700;color:var(--accent2);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.tl-note{font-size:10px;color:var(--muted);margin-top:1px;}
+.ttime-disclaimer{padding:12px 18px;background:rgba(245,197,66,.04);border-top:1px solid rgba(245,197,66,.12);font-size:11px;color:#a08a40;line-height:1.6;font-style:italic;}
+.ttime-disclaimer strong{color:var(--gold);font-style:normal;}
+.ttime-gmaps{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--accent2);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);padding:5px 12px;border-radius:6px;text-decoration:none;margin-top:10px;}
+.route-map-header{padding:14px 20px;border-bottom:1px solid var(--b1);font-size:12px;font-weight:700;color:var(--muted);}
+#detailMap{height:200px;width:100%;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .booking-layout{grid-template-columns:1fr;}
+  .booking-map-col{display:none;}
+  .crm-layout{grid-template-columns:1fr;}
+  .crm-detail{display:none;}
+}
+@media(max-width:600px){
+  .bform{padding:18px 16px 60px;}
+  .fgrid-2,.fgrid-3{grid-template-columns:1fr;}
+  .city-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+}
+
+/* step pages */
+.step-page{display:none;animation:fadeIn .2s ease;}
+.step-page.active{display:block;}
+/* ── NEUROMARKETING INFOGRAPHIC ── */
+.nm-panel{padding:18px 16px;display:flex;flex-direction:column;gap:14px;background:var(--bg);}
+
+.nm-hero{background:linear-gradient(135deg,rgba(79,142,247,.12) 0%,rgba(122,174,255,.05) 100%);border:1px solid rgba(79,142,247,.25);border-radius:12px;padding:16px 18px;}
+.nm-hook-badge{display:inline-flex;align-items:center;background:linear-gradient(90deg,var(--accent),#a78bfa);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;padding:4px 10px;border-radius:20px;margin-bottom:10px;text-transform:uppercase;}
+.nm-headline{font-size:18px;font-weight:900;line-height:1.3;color:#fff;margin-bottom:7px;}
+.nm-subheadline{font-size:12px;color:rgba(255,255,255,.65);line-height:1.55;}
+.nm-subheadline strong{color:var(--green);}
+
+.nm-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.nm-col{background:var(--surf);border:1px solid var(--b2);border-radius:10px;padding:12px 13px;display:flex;flex-direction:column;gap:8px;}
+.nm-before{border-color:rgba(255,82,82,.18);background:rgba(255,82,82,.04);}
+.nm-after{border-color:rgba(62,207,122,.2);background:rgba(62,207,122,.04);}
+.nm-col-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.nm-before .nm-col-label{color:var(--red);}
+.nm-after .nm-col-label{color:var(--green);}
+.nm-issue,.nm-win{display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.45;color:rgba(255,255,255,.7);}
+.nm-win strong{color:var(--green);}
+.nm-i-icon,.nm-w-icon{flex-shrink:0;font-size:9px;margin-top:3px;}
+.nm-waste,.nm-save{margin-top:6px;padding:10px;border-radius:8px;text-align:center;}
+.nm-waste{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.2);}
+.nm-save{background:rgba(62,207,122,.1);border:1px solid rgba(62,207,122,.2);}
+.nm-waste-num,.nm-save-num{font-size:24px;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1;}
+.nm-waste-num{color:var(--red);}
+.nm-save-num{color:var(--green);}
+.nm-waste-num span,.nm-save-num span{font-size:13px;font-weight:700;margin-left:2px;}
+.nm-waste-lbl,.nm-save-lbl{font-size:9px;font-weight:700;text-transform:uppercase;margin-top:3px;opacity:.65;line-height:1.3;}
+
+.nm-route-vis{background:var(--surf2);border:1px solid var(--b2);border-radius:10px;padding:12px 13px;}
+.nm-route-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.nm-cities-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.nm-city-pill{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--surf);border:1px solid var(--b2);border-radius:7px;padding:5px 7px;font-size:8px;min-width:36px;text-align:center;cursor:default;}
+.nm-city-pill span{font-size:9px;font-weight:700;color:rgba(255,255,255,.8);}
+.nm-city-pill.ua{border-color:rgba(0,87,183,.4);background:rgba(0,87,183,.08);}
+.nm-city-pill.pl{border-color:rgba(220,20,60,.3);background:rgba(220,20,60,.06);}
+.nm-city-pill.cz{border-color:rgba(215,30,45,.3);background:rgba(215,30,45,.05);}
+.nm-city-pill.de{border-color:rgba(255,206,0,.2);background:rgba(255,206,0,.05);}
+.nm-city-pill.de.hl{border-color:var(--gold);background:rgba(245,197,66,.12);box-shadow:0 0 10px rgba(245,197,66,.2);}
+.nm-city-pill.bord{border-color:rgba(255,159,46,.3);background:rgba(255,159,46,.06);}
+.nm-arrow{color:var(--muted);font-size:12px;font-weight:700;}
+.nm-route-note{margin-top:8px;font-size:10px;color:var(--muted);font-weight:600;}
+
+.nm-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.nm-stat-box{background:var(--surf);border:1px solid var(--b2);border-radius:9px;padding:10px 8px;text-align:center;}
+.nm-stat-box.accent{border-color:rgba(62,207,122,.3);background:rgba(62,207,122,.06);}
+.nm-stat-num{font-size:16px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.1;}
+.nm-stat-box.accent .nm-stat-num{color:var(--green);}
+.nm-stat-lbl{font-size:9px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.3;}
+
+.nm-quote{background:linear-gradient(135deg,rgba(245,197,66,.07),rgba(245,197,66,.02));border:1px solid rgba(245,197,66,.2);border-left:3px solid var(--gold);border-radius:10px;padding:14px 15px;display:flex;gap:10px;align-items:flex-start;}
+.nm-quote-icon{font-size:20px;flex-shrink:0;margin-top:-2px;}
+.nm-quote-text{font-size:12px;line-height:1.6;color:rgba(255,255,255,.75);font-style:italic;}
+.nm-quote-text strong{color:var(--gold);font-style:normal;font-weight:800;}
+.nm-quote-author{font-size:10px;font-weight:700;color:var(--muted);margin-top:6px;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <a class="logo" href="#">
+    <div class="logo-box">🚌</div>
+    <div class="logo-name">Trans<span>Line</span></div>
+  </a>
+  <div class="view-switcher">
+    <button class="vsw active" onclick="switchView('client')">🎫 Клієнт</button>
+    <button class="vsw" onclick="switchView('crm')">📋 CRM Перевізника</button>
+  </div>
+  <div class="topbar-right">
+    <div class="status-dot"></div>
+    <span class="status-txt">52 рейси онлайн</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+  CLIENT PANEL
+═══════════════════════════════════════════════ -->
+<div id="panel-client" class="panel active">
+  <div class="booking-layout">
+
+    <!-- LEFT: FORM -->
+    <div class="booking-form-col">
+      <div class="bform">
+
+        <!-- STEP BAR -->
+        <div class="step-bar">
+          <div class="st act" id="stItem1"><div class="st-circle act" id="stC1">1</div><div class="st-lbl">Маршрут</div></div>
+          <div class="st-line" id="stL1"></div>
+          <div class="st act" id="stItem2"><div class="st-circle" id="stC2">2</div><div class="st-lbl">Адреси</div></div>
+          <div class="st-line" id="stL2"></div>
+          <div class="st" id="stItem3"><div class="st-circle" id="stC3">3</div><div class="st-lbl">Пасажири</div></div>
+          <div class="st-line" id="stL3"></div>
+          <div class="st" id="stItem4"><div class="st-circle" id="stC4">4</div><div class="st-lbl">Оплата</div></div>
+        </div>
+
+        <!-- ── STEP 1: ROUTE + DATE ── -->
+        <div id="step1" class="step-page active">
+
+          <!-- HERO PAIN POINT -->
+          <div class="hero-pain">
+            <div class="hero-pain-badge">🚌 TransLine — новий стандарт</div>
+            <div class="hero-pain-headline">Втомились від поїздки через <em>чужі посилки і сусідні села?</em></div>
+            <div class="hero-pain-sub">
+              Більшість перевізників відхиляються від траси на <strong>15–30 км</strong> щоб завезти посилку або забрати пасажира з глухого кута.
+              Ви сидите у мікроавтобусі та чекаєте. У TransLine такого <strong>не буває ніколи.</strong>
+            </div>
+            <div class="hero-pills-row">
+              <div class="hero-pill r">🔴 Інші: +15–30 км об'їзди</div>
+              <div class="hero-pill r">🔴 Невідомо коли приїдете</div>
+              <div class="hero-pill r">🔴 Жодних зупинок за розкладом</div>
+              <div class="hero-pill g">✅ Тільки великі міста</div>
+              <div class="hero-pill g">✅ Відхилення ≤ 7 км</div>
+              <div class="hero-pill g">✅ Зупинки строго по 15 хв</div>
+              <div class="hero-pill g">✅ Заправки кожні 3 год</div>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title">🧭 Напрямок</div>
+            <div class="dir-grid6">
+              <div class="dir-card sel" id="dir-ua-de" onclick="setDir('ua-de')">
+                <div class="dc-top">🇺🇦 → 🇩🇪</div>
+                <div class="dc-name">Україна → Німеччина</div>
+                <div class="dc-sub">Щосуботи, 08:00</div>
+              </div>
+              <div class="dir-card" id="dir-de-ua" onclick="setDir('de-ua')">
+                <div class="dc-top">🇩🇪 → 🇺🇦</div>
+                <div class="dc-name">Німеччина → Україна</div>
+                <div class="dc-sub">Пн–Вт, за запитом</div>
+              </div>
+              <div class="dir-card" id="dir-ua-cz" onclick="setDir('ua-cz')">
+                <div class="dc-top">🇺🇦 → 🇨🇿</div>
+                <div class="dc-name">Україна → Чехія</div>
+                <div class="dc-sub">Щосуботи, 08:00</div>
+              </div>
+              <div class="dir-card" id="dir-cz-ua" onclick="setDir('cz-ua')">
+                <div class="dc-top">🇨🇿 → 🇺🇦</div>
+                <div class="dc-name">Чехія → Україна</div>
+                <div class="dc-sub">Пн–Вт, за запитом</div>
+              </div>
+              <div class="dir-card" id="dir-ua-pl" onclick="setDir('ua-pl')">
+                <div class="dc-top">🇺🇦 → 🇵🇱</div>
+                <div class="dc-name">Україна → Польща</div>
+                <div class="dc-sub">Щоденно, 08:00</div>
+              </div>
+              <div class="dir-card" id="dir-pl-ua" onclick="setDir('pl-ua')">
+                <div class="dc-top">🇵🇱 → 🇺🇦</div>
+                <div class="dc-name">Польща → Україна</div>
+                <div class="dc-sub">Щоденно, за запитом</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title" id="routeSectionTitle">🗺 Маршрут: UA → PL → CZ → DE (150k+ міст, ≤7 км відхилення)</div>
+            <div class="route-strip"><div class="stops-row" id="routeVis"></div></div>
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(62,207,122,.07);border:1px solid rgba(62,207,122,.15);border-radius:8px;padding:10px 14px;margin-bottom:4px;font-size:12px;font-weight:600;color:var(--green);">
+              <span id="vignetteNote">🇨🇿 Маршрут через Чехію по трасі D1+D8+A17 (Краків → Острава → Прага → Дрезден). Потрібна чеська вінетка ~€15.</span>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title" id="fromLabel">🟢 Звідки їдете?</div>
+            <div class="city-grid" id="fromGrid"></div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title" id="toLabel">🟡 До якого міста? (CZ 🇨🇿 / DE 🇩🇪)</div>
+            <div class="city-grid" id="toGrid"></div>
+          </div>
+
+          <!-- TRAVEL TIME -->
+          <div id="ttimeSection" style="display:none;" class="fsec">
+            <div class="fsec-title">⏱ Час у дорозі</div>
+            <div class="ttime-block">
+              <div class="ttime-head">
+                <div>
+                  <div class="ttime-title">🗺 <span id="ttRouteLabel">—</span></div>
+                  <div class="ttime-sub">Розклад зупинок · на основі Google Maps</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="ttime-total" id="ttTotal">—</div>
+                  <div class="ttime-sub">загальний час</div>
+                </div>
+              </div>
+              <div class="ttime-body">
+                <div class="stop-timeline" id="ttStopline"></div>
+                <a id="ttGmapsLink" href="#" target="_blank" class="ttime-gmaps">
+                  🔗 Переглянути маршрут у Google Maps →
+                </a>
+              </div>
+              <div class="ttime-disclaimer">
+                <strong>⚠️ Увага:</strong> Зазначений час у дорозі є <em>орієнтовним</em> та розрахований на підставі стандартних умов дорожнього руху згідно з даними Google Maps. Фактична тривалість поїздки може змінюватись залежно від дорожньо-транспортної ситуації, інтенсивності руху, умов та тривалості перетину державних кордонів, погодних умов, технічних зупинок, а також інших непередбачуваних обставин незалежної від Перевізника сили. Перевізник докладає всіх зусиль для дотримання розкладу, однак не несе відповідальності за затримки, що виникли з причин, які перебувають поза межами його контролю. Рекомендуємо закладати додатковий резерв часу при плануванні подальших стикувань.
+              </div>
+            </div>
+          </div>
+
+          <div class="fsec" id="dateSection" style="display:none;">
+            <div class="fsec-title">📅 Оберіть дату</div>
+            <div class="date-grid" id="dateGrid"></div>
+          </div>
+
+          <button class="btn-p" id="btnS1" onclick="goStep(2)" disabled>Далі — Вказати адреси →</button>
+        </div>
+
+        <!-- ── STEP 2: ADDRESSES ── -->
+        <div id="step2" class="step-page">
+          <div class="fsec">
+            <div class="fsec-title">📍 Адреса відправлення</div>
+            <div class="addr-block">
+              <div class="addr-label from-lbl">🟢 Звідки забрати пасажира</div>
+              <div class="fgrid-2">
+                <div>
+                  <div class="flabel">Ім'я та прізвище *</div>
+                  <input class="finput" id="s-name" type="text" placeholder="Іваненко Олексій Петрович">
+                </div>
+                <div>
+                  <div class="flabel">Телефон *</div>
+                  <input class="finput" id="s-phone" type="tel" placeholder="+380 XX XXX XXXX">
+                </div>
+              </div>
+              <div class="fgrid-2">
+                <div>
+                  <div class="flabel">WhatsApp (якщо інший)</div>
+                  <input class="finput" id="s-wa" type="tel" placeholder="+380 або +49...">
+                </div>
+                <div>
+                  <div class="flabel">Місто відправлення *</div>
+                  <input class="finput" id="s-city" type="text" placeholder="Івано-Франківськ">
+                </div>
+              </div>
+              <div class="fgrid-3">
+                <div>
+                  <div class="flabel">Вулиця *</div>
+                  <input class="finput" id="s-street" type="text" placeholder="вул. Незалежності">
+                </div>
+                <div>
+                  <div class="flabel">Будинок *</div>
+                  <input class="finput" id="s-house" type="text" placeholder="14А">
+                </div>
+                <div>
+                  <div class="flabel">Індекс</div>
+                  <input class="finput" id="s-zip" type="text" placeholder="76000">
+                </div>
+              </div>
+              <div class="fgrid-full">
+                <div class="flabel">Коментар (під'їзд, домофон тощо)</div>
+                <input class="finput" id="s-note" type="text" placeholder="2-й поверх, домофон #45">
+              </div>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title">🏁 Адреса призначення</div>
+            <div class="addr-block">
+              <div class="addr-label to-lbl">🟡 Куди доставити пасажира</div>
+              <div class="fgrid-2">
+                <div>
+                  <div class="flabel">Ім'я отримувача (якщо інше)</div>
+                  <input class="finput" id="r-name" type="text" placeholder="або те ж саме">
+                </div>
+                <div>
+                  <div class="flabel">Телефон отримувача</div>
+                  <input class="finput" id="r-phone" type="tel" placeholder="+49 XXX XXXXXXX">
+                </div>
+              </div>
+              <div class="fgrid-2">
+                <div>
+                  <div class="flabel">Місто прибуття *</div>
+                  <input class="finput" id="r-city" type="text" placeholder="Heidelberg" id="r-city">
+                </div>
+                <div>
+                  <div class="flabel">Індекс *</div>
+                  <input class="finput" id="r-zip" type="text" placeholder="69120">
+                </div>
+              </div>
+              <div class="fgrid-3">
+                <div>
+                  <div class="flabel">Вулиця *</div>
+                  <input class="finput" id="r-street" type="text" placeholder="Hauptstraße">
+                </div>
+                <div>
+                  <div class="flabel">Будинок *</div>
+                  <input class="finput" id="r-house" type="text" placeholder="22">
+                </div>
+                <div>
+                  <div class="flabel">WhatsApp</div>
+                  <input class="finput" id="r-wa" type="tel" placeholder="+49...">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn-s" onclick="goStep(1)">← Назад</button>
+            <button class="btn-p" onclick="goStep(3);updateMapFromAddresses()">Далі — Пасажири →</button>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: PASSENGERS + PARCEL ── -->
+        <div id="step3" class="step-page">
+          <div class="fsec">
+            <div class="fsec-title">👥 Кількість пасажирів</div>
+            <div class="pass-row">
+              <div><div class="pr-name">Дорослий</div><div class="pr-sub">Від 12 років</div></div>
+              <div class="counter">
+                <button class="cnt" onclick="chPass('adult',-1)" id="am" disabled>−</button>
+                <span class="cnt-n" id="adultN">1</span>
+                <button class="cnt" onclick="chPass('adult',1)" id="ap">+</button>
+              </div>
+            </div>
+            <div class="pass-row">
+              <div><div class="pr-name">Дитина <span style="font-size:10px;background:rgba(62,207,122,.15);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:700;">−30%</span></div><div class="pr-sub">До 12 років</div></div>
+              <div class="counter">
+                <button class="cnt" onclick="chPass('child',-1)" id="cm" disabled>−</button>
+                <span class="cnt-n" id="childN">0</span>
+                <button class="cnt" onclick="chPass('child',1)" id="cp">+</button>
+              </div>
+            </div>
+            <div class="pass-row" style="margin-bottom:0;">
+              <div><div class="pr-name">Великий багаж <span style="font-size:10px;background:rgba(245,197,66,.15);color:var(--gold);padding:2px 6px;border-radius:4px;font-weight:700;">+€10</span></div><div class="pr-sub">Понад 1 валіза</div></div>
+              <div class="counter">
+                <button class="cnt" onclick="chPass('bag',-1)" id="bm" disabled>−</button>
+                <span class="cnt-n" id="bagN">0</span>
+                <button class="cnt" onclick="chPass('bag',1)" id="bp">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title">📦 Посилки та передачі</div>
+            <div class="parcel-toggle" id="pToggle" onclick="togParcel()">
+              <div class="pt-icon">📦</div>
+              <div class="pt-info">
+                <div class="pt-name">Додати посилку</div>
+                <div class="pt-sub">Від €20 · відстеження · QR-код</div>
+              </div>
+              <div class="tog-sw"></div>
+            </div>
+            <div class="parcel-form" id="pForm">
+              <div class="fgrid-2" style="margin-bottom:10px;">
+                <div><div class="flabel">Вага (кг)</div><input class="finput" type="number" id="pw" value="2" min="0.5" max="50" step="0.5" oninput="calcParcel()"></div>
+                <div><div class="flabel">Розмір</div>
+                  <select class="finput" onchange="calcParcel()">
+                    <option value="s">Малий (&lt;30×20)</option>
+                    <option value="m" selected>Середній (&lt;50×40)</option>
+                    <option value="l">Великий (&lt;80×60)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fgrid-2" style="margin-bottom:10px;">
+                <div><div class="flabel">Відправник</div><input class="finput" type="text" placeholder="ПІБ відправника"></div>
+                <div><div class="flabel">Отримувач + тел.</div><input class="finput" type="text" placeholder="ПІБ + номер тел."></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.15);border-radius:var(--r2);padding:10px 14px;">
+                <span style="font-size:12px;color:var(--muted);">Вартість доставки:</span>
+                <span style="font-size:16px;font-weight:800;color:var(--accent2);" id="pPrice">€25</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="price-box">
+            <div class="pb-head">Рахунок</div>
+            <div class="pb-row"><span class="pb-lbl" id="pbTL">Квиток × 1</span><span class="pb-val" id="pbTV">—</span></div>
+            <div class="pb-row" id="pbCR" style="display:none"><span class="pb-lbl" id="pbCL">Дитина × 0</span><span class="pb-val" id="pbCV">—</span></div>
+            <div class="pb-row" id="pbBR" style="display:none"><span class="pb-lbl">Багаж</span><span class="pb-val" id="pbBV">—</span></div>
+            <div class="pb-row" id="pbPR" style="display:none"><span class="pb-lbl">Посилка</span><span class="pb-val" id="pbPV">—</span></div>
+            <div class="pb-total"><span>Разом</span><span class="pb-tot-price" id="pbTotal">€—</span></div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-s" onclick="goStep(2)">← Назад</button>
+            <button class="btn-p" onclick="goStep(4)">Далі — Оплата →</button>
+          </div>
+        </div>
+
+        <!-- ── STEP 4: PAYMENT ── -->
+        <div id="step4" class="step-page">
+          <div class="fsec">
+            <div class="fsec-title">💳 Спосіб оплати</div>
+            <div class="pay-row">
+              <div class="pay-m sel" id="pm-card" onclick="selPay('card')"><div class="pay-icon">💳</div><div class="pay-name">Карта</div></div>
+              <div class="pay-m" id="pm-paypal" onclick="selPay('paypal')"><div class="pay-icon">🅿️</div><div class="pay-name">PayPal</div></div>
+              <div class="pay-m" id="pm-cash" onclick="selPay('cash')"><div class="pay-icon">💵</div><div class="pay-name">Готівка</div></div>
+            </div>
+          </div>
+
+          <div class="fsec">
+            <div class="fsec-title">✉️ Контактні дані</div>
+            <div class="contact-block">
+              <div class="fgrid-2" style="margin-bottom:10px;">
+                <div><div class="flabel">Email</div><input class="finput" id="cfEmail" type="email" placeholder="для квитка"></div>
+                <div><div class="flabel">Telegram (нікнейм)</div><input class="finput" id="cfTg" type="text" placeholder="@username"></div>
+              </div>
+              <div class="fgrid-full">
+                <div class="flabel">Коментар водію</div>
+                <input class="finput" id="cfNote" type="text" placeholder="Дитяче крісло, зустріч у центрі міста...">
+              </div>
+            </div>
+          </div>
+
+          <div class="price-box">
+            <div class="pb-total"><span>💳 До оплати</span><span class="pb-tot-price" id="p4Total">€—</span></div>
+          </div>
+          <div class="pill pill-g" style="margin-bottom:14px;">🔒 Безпечна оплата · Скасування за 48 год безкоштовно</div>
+          <div class="btn-row">
+            <button class="btn-s" onclick="goStep(3)">← Назад</button>
+            <button class="btn-p" onclick="confirmBooking()">🎉 Підтвердити і оплатити</button>
+          </div>
+        </div>
+
+        <!-- ── SUCCESS ── -->
+        <div id="step5" class="step-page">
+          <div class="success-wrap">
+            <div class="suc-icon">✅</div>
+            <div class="suc-title">Заброньовано!</div>
+            <p class="suc-sub">Квиток надіслано у Telegram. Дані передані перевізнику у CRM.</p>
+            <div class="ticket-card">
+              <div class="tk-route">
+                <div class="tk-city" id="tFrom">—</div>
+                <div class="tk-arrow">→</div>
+                <div class="tk-city" id="tTo">—</div>
+              </div>
+              <div class="tk-grid">
+                <div><div class="tkg-lbl">Дата</div><div class="tkg-val" id="tDate">—</div></div>
+                <div><div class="tkg-lbl">Відправлення</div><div class="tkg-val">08:00</div></div>
+                <div><div class="tkg-lbl">Адреса забору</div><div class="tkg-val" id="tPickup">—</div></div>
+                <div><div class="tkg-lbl">Адреса доставки</div><div class="tkg-val" id="tDrop">—</div></div>
+                <div><div class="tkg-lbl">Пасажири</div><div class="tkg-val" id="tPass">—</div></div>
+                <div><div class="tkg-lbl">Сплачено</div><div class="tkg-val" id="tPrice">—</div></div>
+              </div>
+              <div class="tk-code-row">
+                <div class="tk-code" id="tCode">TL-????</div>
+                <div class="tk-tg">📱 Квиток в Telegram</div>
+              </div>
+            </div>
+            <button class="btn-p" style="max-width:320px;margin:0 auto;display:block;" onclick="resetBooking()">← Нове бронювання</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: MAP + NEUROMARKETING -->
+    <div class="booking-map-col">
+
+      <!-- NEUROMARKETING INFOGRAPHIC -->
+      <div class="nm-panel" id="nmPanel">
+
+        <!-- HERO HOOK -->
+        <div class="nm-hero">
+          <div class="nm-hook-badge">🚀 ТІЛЬКИ У TRANSLINE</div>
+          <div class="nm-headline">Ваша поїздка більше не залежить від чужих зупинок</div>
+          <div class="nm-subheadline">Ми першими в Україні запровадили маршрут <strong>виключно по великих містах</strong> — без сіл, без об'їздів, без очікувань</div>
+        </div>
+
+        <!-- PAIN vs GAIN comparison -->
+        <div class="nm-compare">
+          <div class="nm-col nm-before">
+            <div class="nm-col-label">😩 Як було раніше</div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Водій забирає останнього пасажира з глухого села +40 км у бік</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Зупинки без розкладу — «ще 5 хвилин» перетворюються на 40</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Ви останній у маршруті — +6–10 годин до часу в дорозі</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Невідомо де, коли і чому зупинились</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Зайвий кілометраж — зайве паливо — зайвий час</span>
+            </div>
+            <div class="nm-waste">
+              <div class="nm-waste-num">+6–10<span>год</span></div>
+              <div class="nm-waste-lbl">втрачено<br>якщо ви останній</div>
+            </div>
+          </div>
+
+          <div class="nm-col nm-after">
+            <div class="nm-col-label">✨ Як у TransLine</div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Тільки міста з населенням <strong>150 000+</strong> — жодного відхилення</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Розклад зупинок фіксований — ви знаєте час кожної точки</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Маршрут однаковий для всіх — перший ви чи останній</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Відхилення від траси — <strong>максимум 7 км</strong>, закріплено стандартом</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Автобан A4 / A17 / D1 — найшвидша дорога Європою</span>
+            </div>
+            <div class="nm-save">
+              <div class="nm-save-num">−3–10<span>год</span></div>
+              <div class="nm-save-lbl">економії<br>часу реально</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INFOGRAPHIC ROUTE STRIP -->
+        <div class="nm-route-vis">
+          <div class="nm-route-label">Наш маршрут — лише великі міста:</div>
+          <div class="nm-cities-row">
+            <div class="nm-city-pill ua">🇺🇦<br><span>ІФ</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill ua">🇺🇦<br><span>Львів</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill bord">🚧<br><span>кордон</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill pl">🇵🇱<br><span>Краків</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill cz">🇨🇿<br><span>Прага</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de">🇩🇪<br><span>Дрезден</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de hl">🇩🇪<br><span>Мангайм</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de">🇩🇪<br><span>Фрайбург</span></div>
+          </div>
+          <div class="nm-route-note">Відхилення від траси ≤ 7 км &nbsp;·&nbsp; Тільки великі міста &nbsp;·&nbsp; Жодних сіл</div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="nm-stats-row">
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">16</div>
+            <div class="nm-stat-lbl">міст на маршруті</div>
+          </div>
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">≤7 км</div>
+            <div class="nm-stat-lbl">макс. відхилення</div>
+          </div>
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">−10 год</div>
+            <div class="nm-stat-lbl">порівняно зі звичайними перевізниками</div>
+          </div>
+          <div class="nm-stat-box accent">
+            <div class="nm-stat-num">100%</div>
+            <div class="nm-stat-lbl">автобан без об'їздів</div>
+          </div>
+        </div>
+
+        <!-- TRUST QUOTE -->
+        <div class="nm-quote">
+          <div class="nm-quote-icon">💬</div>
+          <div class="nm-quote-text">
+            «Раніше їхала з Мангайму до Львова 36 годин. З TransLine — <strong>24 години</strong>. Різниця — це час, який я провела вдома з родиною, а не у чиємусь дворі посеред ночі.»
+          </div>
+          <div class="nm-quote-author">— Оксана, пасажир із Мангайму</div>
+        </div>
+
+      </div><!-- /nm-panel -->
+
+      <div class="map-header">
+        <div class="mh-title">🗺 Маршрут на карті</div>
+        <div class="mh-info" id="mapInfo">Оберіть міста для відображення маршруту</div>
+      </div>
+      <div id="map"></div>
+      <div class="map-footer">
+        <span class="mf-stat">Відстань: <strong id="mapDist">—</strong> &nbsp;|&nbsp; Час: <strong id="mapTime">—</strong></span>
+        <a id="gmapsLink" class="open-gmaps" href="#" target="_blank">Відкрити в Google Maps →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+  CRM PANEL
+═══════════════════════════════════════════════ -->
+<div id="panel-crm" class="panel">
+  <div class="crm-layout">
+
+    <!-- MAIN TABLE -->
+    <div class="crm-main">
+      <div class="crm-toolbar">
+        <span class="crm-title">📋 CRM Перевізника</span>
+        <span class="crm-stat cs-total" id="crmTotal">Всього: 0</span>
+        <span class="crm-stat cs-today" id="crmToday">Сьогодні: 0</span>
+        <span class="crm-stat cs-pend" id="crmPend">Очікують: 0</span>
+        <input class="crm-search" type="text" placeholder="🔍 Пошук пасажира..." oninput="searchCRM(this.value)">
+      </div>
+      <div class="export-row">
+        <button class="exp-btn csv" onclick="exportCSV()">📊 CSV</button>
+        <button class="exp-btn xlsx" onclick="exportXLSX()">📗 Excel</button>
+        <button class="exp-btn pdf" onclick="exportPDF()">📄 PDF</button>
+        <button class="exp-btn" style="background:rgba(245,197,66,.1);color:var(--gold);border:1px solid rgba(245,197,66,.25);" onclick="switchCRM('fleet')">🚌 Автопарк</button>
+        <button class="exp-btn" style="background:rgba(122,174,255,.1);color:var(--accent2);border:1px solid rgba(122,174,255,.25);" onclick="switchCRM('builder')">🗺 Маршрут-AI</button>
+        <button class="exp-btn" style="background:rgba(62,207,122,.1);color:var(--green);border:1px solid rgba(62,207,122,.25);" onclick="switchCRM('bookings')" id="btnBackBookings" style="display:none;">← Бронювання</button>
+      </div>
+      <div class="crm-filters">
+        <button class="crf act" onclick="filterCRM('all',this)">Всі</button>
+        <button class="crf" onclick="filterCRM('confirmed',this)">✅ Підтверджені</button>
+        <button class="crf" onclick="filterCRM('pending',this)">⏳ Очікують</button>
+        <button class="crf" onclick="filterCRM('onboard',this)">🚌 В дорозі</button>
+        <button class="crf" onclick="filterCRM('cancelled',this)">❌ Скасовані</button>
+      </div>
+      <div id="crmFleetPanel" style="display:none;">
+        <div style="padding:14px 16px;font-size:13px;font-weight:800;border-bottom:1px solid var(--b1);">🚌 Автопарк — 6 мікроавтобусів</div>
+        <div class="fleet-grid" id="fleetGrid"></div>
+      </div>
+
+      <div id="crmBuilderPanel" style="display:none;">
+        <div style="padding:14px 16px;font-size:13px;font-weight:800;border-bottom:1px solid var(--b1);">🗺 ШІ-Маршрутизатор — Генерація маршруту</div>
+        <div class="rb-panel">
+          <div class="fsec-title">Оберіть мікроавтобус:</div>
+          <div class="rb-bus-selector" id="rbBusSelector"></div>
+          <div class="ai-route-block" id="aiRouteBlock">
+            <div class="ai-route-title">🤖 ШІ-Маршрут — порядок збору пасажирів</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Оберіть мікроавтобус та натисніть кнопку для генерації оптимального маршруту на основі всіх куплених квитків.</div>
+            <button class="btn-p" style="margin-bottom:16px;" onclick="generateAIRoute()">🤖 Згенерувати маршрут</button>
+            <div id="aiRouteStops"></div>
+          </div>
+        </div>
+      </div>
+        <table class="crm-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ПІБ Пасажира</th>
+              <th>Маршрут</th>
+              <th>Дата рейсу</th>
+              <th>Адреса збору</th>
+              <th>Адреса доставки</th>
+              <th>Тел / WA</th>
+              <th>Ціна</th>
+              <th>Статус</th>
+              <th>Карта</th>
+            </tr>
+          </thead>
+          <tbody id="crmTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="crm-detail" id="crmDetail">
+      <div class="crm-empty" id="crmEmptyState">
+        <div class="crm-empty-icon">📋</div>
+        <div class="crm-empty-text">Натисніть на рядок<br>щоб побачити деталі</div>
+      </div>
+      <div id="crmDetailContent" style="display:none;">
+        <div class="detail-header">
+          <div class="dh-id" id="dId">—</div>
+          <div class="dh-status" id="dStatus"></div>
+        </div>
+        <div class="detail-section">
+          <div class="ds-title">👤 Пасажир</div>
+          <div class="info-row"><span class="ir-label">ПІБ</span><span class="ir-val" id="dName">—</span></div>
+          <div class="info-row"><span class="ir-label">Телефон</span><span class="ir-val" id="dPhone">—</span></div>
+          <div class="info-row"><span class="ir-label">WhatsApp</span><span class="ir-val" id="dWa">—</span></div>
+          <div class="info-row"><span class="ir-label">Email</span><span class="ir-val" id="dEmail">—</span></div>
+          <div class="info-row"><span class="ir-label">Telegram</span><span class="ir-val" id="dTg">—</span></div>
+        </div>
+        <div class="detail-section">
+          <div class="ds-title">📍 Адреса відправлення</div>
+          <div class="info-row"><span class="ir-label">Місто</span><span class="ir-val" id="dFromCity">—</span></div>
+          <div class="info-row"><span class="ir-label">Вулиця</span><span class="ir-val" id="dFromStreet">—</span></div>
+          <div class="info-row"><span class="ir-label">Індекс</span><span class="ir-val" id="dFromZip">—</span></div>
+          <div class="info-row"><span class="ir-label">Коментар</span><span class="ir-val" id="dFromNote">—</span></div>
+        </div>
+        <div class="detail-section">
+          <div class="ds-title">🏁 Адреса призначення</div>
+          <div class="info-row"><span class="ir-label">Місто</span><span class="ir-val" id="dToCity">—</span></div>
+          <div class="info-row"><span class="ir-label">Вулиця</span><span class="ir-val" id="dToStreet">—</span></div>
+          <div class="info-row"><span class="ir-label">Індекс</span><span class="ir-val" id="dToZip">—</span></div>
+          <div class="info-row"><span class="ir-label">Отримувач</span><span class="ir-val" id="dRecipient">—</span></div>
+        </div>
+        <div class="detail-section">
+          <div class="ds-title">🚌 Рейс</div>
+          <div class="info-row"><span class="ir-label">Маршрут</span><span class="ir-val" id="dRoute">—</span></div>
+          <div class="info-row"><span class="ir-label">Дата</span><span class="ir-val" id="dDate">—</span></div>
+          <div class="info-row"><span class="ir-label">Пасажири</span><span class="ir-val" id="dPass">—</span></div>
+          <div class="info-row"><span class="ir-label">Посилка</span><span class="ir-val" id="dParcel">—</span></div>
+          <div class="info-row"><span class="ir-label">Вартість</span><span class="ir-val" id="dPrice" style="color:var(--gold);font-weight:800;">—</span></div>
+          <div class="info-row"><span class="ir-label">Коментар</span><span class="ir-val" id="dNote">—</span></div>
+        </div>
+        <div class="detail-section">
+          <div class="ds-title">🗺 Маршрут на карті</div>
+          <div id="detailMap" class="mini-map"></div>
+        </div>
+        <div class="action-row">
+          <button class="act-btn act-conf" onclick="changeStatus('confirmed')">✅ Підтвердити</button>
+          <button class="act-btn act-nav" onclick="openNavigation()">🧭 Навігація</button>
+          <button class="act-btn act-can" onclick="changeStatus('cancelled')">❌ Скасувати</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- app-shell -->
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════
+
+// Full route cities 150k+ sorted by geography UA→DE
+const ROUTE_ALL = [
+  {id:'ivf',  name:'ІФ',       full:'Івано-Франківськ', flag:'🇺🇦', lat:48.9226, lng:24.7111, pop:'230k', border:false},
+  {id:'chern',name:'Чернівці', full:'Чернівці',          flag:'🇺🇦', lat:48.2921, lng:25.9351, pop:'250k', border:false},
+  {id:'lviv', name:'Львів',    full:'Львів',              flag:'🇺🇦', lat:49.8397, lng:24.0297, pop:'720k', border:false},
+  {id:'bord', name:'Кордон',   full:'Кордон UA/PL',       flag:'🚧',  lat:49.8420, lng:22.5500, pop:'',     border:true},
+  {id:'krak', name:'Краків',   full:'Краків',             flag:'🇵🇱', lat:50.0647, lng:19.9450, pop:'760k', border:false},
+  {id:'bord2',name:'CZ',       full:'Кордон PL/CZ',       flag:'🚧',  lat:49.9000, lng:18.5500, pop:'',     border:true},
+  {id:'ostr', name:'Острава',  full:'Острава',             flag:'🇨🇿', lat:49.8209, lng:18.2625, pop:'270k', border:false},
+  {id:'prag', name:'Прага',    full:'Прага',               flag:'🇨🇿', lat:50.0755, lng:14.4378, pop:'1.3M', border:false},
+  {id:'dres', name:'Дрезден',  full:'Дрезден',            flag:'🇩🇪', lat:51.0504, lng:13.7373, pop:'563k', border:false},
+  {id:'leip', name:'Лейпциг',  full:'Лейпциг',            flag:'🇩🇪', lat:51.3397, lng:12.3731, pop:'610k', border:false},
+  {id:'erf',  name:'Ерфурт',   full:'Ерфурт',             flag:'🇩🇪', lat:50.9848, lng:11.0299, pop:'215k', border:false},
+  {id:'frank',name:'Франкфурт',full:'Франкфурт',          flag:'🇩🇪', lat:50.1109, lng:8.6821,  pop:'760k', border:false},
+  {id:'darm', name:'Дармштадт',full:'Дармштадт',          flag:'🇩🇪', lat:49.8728, lng:8.6512,  pop:'162k', border:false},
+  {id:'mannh',name:'Мангайм',  full:'Мангайм',            flag:'🇩🇪', lat:49.4875, lng:8.4660,  pop:'316k', border:false},
+  {id:'heid', name:'Гайдельберг',full:'Гайдельберг',      flag:'🇩🇪', lat:49.3988, lng:8.6724,  pop:'162k', border:false},
+  {id:'karl', name:'Карлсруе', full:'Карлсруе',           flag:'🇩🇪', lat:49.0069, lng:8.4037,  pop:'309k', border:false},
+  {id:'stutt',name:'Штутгарт', full:'Штутгарт',           flag:'🇩🇪', lat:48.7758, lng:9.1829,  pop:'620k', border:false},
+  {id:'frei', name:'Фрайбург', full:'Фрайбург',           flag:'🇩🇪', lat:47.9990, lng:7.8421,  pop:'236k', border:false},
+];
+
+const UA_CITIES = ROUTE_ALL.filter(c=>['ivf','chern','lviv'].includes(c.id));
+const DE_CITIES = ROUTE_ALL.filter(c=>!['ivf','chern','lviv','bord','bord2','krak','ostr','prag'].includes(c.id));
+const CZ_CITIES = ROUTE_ALL.filter(c=>['ostr','prag'].includes(c.id));
+const PL_CITIES = ROUTE_ALL.filter(c=>['krak'].includes(c.id));
+
+// Map direction key → { from, to, routeInfo, vignette }
+const DIR_CONFIG = {
+  'ua-de': { from: UA_CITIES, to: DE_CITIES, fromLbl:'🟢 Місто відправлення (Україна)', toLbl:'🟡 Місто призначення (Чехія / Німеччина)', routeTitle:'🗺 UA → PL → CZ → DE', vignette:'🇨🇿 Маршрут через Чехію D1+D8+A17 (Краків → Острава → Прага → Дрезден). Потрібна чеська вінетка ~€15.', depart:'Щосуботи, 08:00', sat:true },
+  'de-ua': { from: DE_CITIES, to: UA_CITIES, fromLbl:'🟢 Місто відправлення (Чехія / Німеччина)', toLbl:'🟡 Місто призначення (Україна)', routeTitle:'🗺 DE → CZ → PL → UA', vignette:'🇨🇿 Маршрут через Чехію D8+D1 (Дрезден → Прага → Острава → Краків). Потрібна чеська вінетка ~€15.', depart:'Понеділок–Вівторок', sat:false },
+  'ua-cz': { from: UA_CITIES, to: CZ_CITIES, fromLbl:'🟢 Місто відправлення (Україна)', toLbl:'🟡 Місто призначення (Чехія)', routeTitle:'🗺 UA → PL → CZ', vignette:'🇨🇿 Маршрут до Чехії: Краків → Острава або Прага по трасі D1. Потрібна чеська вінетка ~€15.', depart:'Щосуботи, 08:00', sat:true },
+  'cz-ua': { from: CZ_CITIES, to: UA_CITIES, fromLbl:'🟢 Місто відправлення (Чехія)', toLbl:'🟡 Місто призначення (Україна)', routeTitle:'🗺 CZ → PL → UA', vignette:'🇨🇿 Маршрут з Чехії D1 → Краків → Україна.', depart:'Понеділок–Вівторок', sat:false },
+  'ua-pl': { from: UA_CITIES, to: PL_CITIES, fromLbl:'🟢 Місто відправлення (Україна)', toLbl:'🟡 Місто призначення (Польща)', routeTitle:'🗺 UA → PL', vignette:'🇵🇱 Маршрут до Польщі через прикордонний перехід Шегині / Медика.', depart:'Щоденно, 08:00', sat:false },
+  'pl-ua': { from: PL_CITIES, to: UA_CITIES, fromLbl:'🟢 Місто відправлення (Польща)', toLbl:'🟡 Місто призначення (Україна)', routeTitle:'🗺 PL → UA', vignette:'🇵🇱 Маршрут з Польщі через прикордонний перехід Медика / Шегині.', depart:'Щоденно, за запитом', sat:false },
+};
+
+// Ticket prices UA → DE
+const PRICES = {
+  krak:45, ostr:55, prag:70,
+  dres:90, leip:95, erf:100,
+  frank:120, darm:115, mannh:115, heid:120, karl:120, stutt:115, frei:130
+};
+
+// Sample CRM bookings
+const crmBookings = [
+  {id:'TL-A4F2',name:'Коваленко Марія Іванівна',phone:'+380 67 123 4567',wa:'+380 67 123 4567',email:'maria@gmail.com',tg:'@maria_koval',
+   fromCity:'Івано-Франківськ',fromStreet:'вул. Галицька, 5',fromZip:'76000',fromNote:'2-й поверх',
+   toCity:'Гайдельберг',toStreet:'Hauptstraße 22',toZip:'69120',recipient:'Петренко Андрій',recPhone:'+49 621 123456',
+   route:'ІФ → Гайдельберг',date:'Субота, 01 Бер 2025',adults:2,children:1,bags:1,parcel:'Ні',price:'€370',status:'confirmed',note:'Дитяче крісло',
+   fromLat:48.9226,fromLng:24.7111,toLat:49.3988,toLng:8.6724},
+  {id:'TL-B7K1',name:'Мельник Тарас Богданович',phone:'+380 50 987 6543',wa:'+380 50 987 6543',email:'taras.m@ukr.net',tg:'@tmelnyk',
+   fromCity:'Львів',fromStreet:'пр. Шевченка, 12',fromZip:'79000',fromNote:'',
+   toCity:'Франкфурт',toStreet:'Kaiserstraße 45',toZip:'60329',recipient:'Мельник Тарас',recPhone:'+49 69 987654',
+   route:'Львів → Франкфурт',date:'Субота, 01 Бер 2025',adults:1,children:0,bags:0,parcel:'5 кг, документи',price:'€135',status:'pending',note:'',
+   fromLat:49.8397,fromLng:24.0297,toLat:50.1109,toLng:8.6821},
+  {id:'TL-C3M8',name:'Семенюк Оксана Василівна',phone:'+380 93 456 7890',wa:'+380 93 456 7890',email:'oksana.s@email.com',tg:'@oksana_sem',
+   fromCity:'Чернівці',fromStreet:'вул. Головна, 33',fromZip:'58000',fromNote:'Вхід з боку паркінгу',
+   toCity:'Штутгарт',toStreet:'Königstraße 10',toZip:'70173',recipient:'Семенюк Оксана',recPhone:'+49 711 456789',
+   route:'Чернівці → Штутгарт',date:'Субота, 01 Бер 2025',adults:1,children:0,bags:1,parcel:'Ні',price:'€125',status:'onboard',note:'',
+   fromLat:48.2921,fromLng:25.9351,toLat:48.7758,toLng:9.1829},
+  {id:'TL-D1N5',name:'Бондаренко Ігор Сергійович',phone:'+380 97 234 5678',wa:'+380 97 234 5678',email:'igor.b@ukr.net',tg:'@ibond',
+   fromCity:'Івано-Франківськ',fromStreet:'вул. Незалежності, 7',fromZip:'76018',fromNote:'',
+   toCity:'Карлсруе',toStreet:'Kaiserallee 22',toZip:'76133',recipient:'Бондаренко Ігор',recPhone:'+49 721 987123',
+   route:'ІФ → Карлсруе',date:'Субота, 08 Бер 2025',adults:2,children:0,bags:0,parcel:'12 кг посилка',price:'€270',status:'confirmed',note:'',
+   fromLat:48.9226,fromLng:24.7111,toLat:49.0069,toLng:8.4037},
+  {id:'TL-E9P3',name:'Литвиненко Наталія Миколаївна',phone:'+380 66 876 5432',wa:'+49 621 555 888',email:'natalia.l@gmail.com',tg:'@natalia_l',
+   fromCity:'Львів',fromStreet:'вул. Городоцька, 55',fromZip:'79007',fromNote:'3 хв пішки від Арсеналу',
+   toCity:'Мангайм',toStreet:'Breite Straße 8',toZip:'68159',recipient:'Литвиненко Наталія',recPhone:'+49 621 555888',
+   route:'Львів → Мангайм',date:'Субота, 08 Бер 2025',adults:1,children:1,bags:0,parcel:'Ні',price:'€192',status:'pending',note:'Дитина 8 років',
+   fromLat:49.8397,fromLng:24.0297,toLat:49.4875,toLng:8.4660},
+  {id:'TL-F2Q7',name:'Шевченко Василь Петрович',phone:'+380 63 321 0987',wa:'+380 63 321 0987',email:'v.shev@ukr.net',tg:'@vasyl_sh',
+   fromCity:'Івано-Франківськ',fromStreet:'вул. Тичини, 22',fromZip:'76014',fromNote:"Під'їзд №2",
+   toCity:'Фрайбург',toStreet:'Bismarckallee 3',toZip:'79098',recipient:'Гончаренко Світлана',recPhone:'+49 761 654321',
+   route:'ІФ → Фрайбург',date:'Субота, 15 Бер 2025',adults:1,children:0,bags:1,parcel:'3 кг, продукти',price:'€163',status:'confirmed',note:'',
+   fromLat:48.9226,fromLng:24.7111,toLat:47.9990,toLng:7.8421},
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let dir='ua-de', fromC=null, toC=null, selDate=null, selDateFull='';
+let adults=1, children=0, bags=0, parcelOn=false, parcelCost=25, payMethod='card';
+let currentStep=1;
+let mapInstance=null, routeLayer=null;
+let detailMapInstance=null;
+let selectedBooking=null;
+let crmFilter='all', crmSearch='';
+let localBookings=[...crmBookings];
+
+// ═══════════════════════════════════════════════
+//  INIT MAP (Leaflet + OpenStreetMap)
+// ═══════════════════════════════════════════════
+function initMap(){
+  if(mapInstance) return;
+  mapInstance = L.map('map',{zoomControl:true,scrollWheelZoom:true}).setView([50.5,14.0],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap contributors',maxZoom:19
+  }).addTo(mapInstance);
+  drawMainRoute();
+}
+
+function drawMainRoute(){
+  if(!mapInstance) return;
+  const pts = ROUTE_ALL.filter(c=>c.id!=='bord'&&c.id!=='bord2').map(c=>([c.lat,c.lng]));
+  if(routeLayer) mapInstance.removeLayer(routeLayer);
+  routeLayer = L.polyline(pts,{color:'#4f8ef7',weight:3,opacity:.6,dashArray:'6,4'}).addTo(mapInstance);
+
+  ROUTE_ALL.filter(c=>c.id!=='bord'&&c.id!=='bord2').forEach(c=>{
+    const m = L.circleMarker([c.lat,c.lng],{radius:5,fillColor:'#4f8ef7',color:'#fff',weight:1.5,fillOpacity:1}).addTo(mapInstance);
+    m.bindTooltip(`${c.flag} ${c.full} (${c.pop})`,{permanent:false,direction:'top'});
+  });
+  mapInstance.fitBounds(routeLayer.getBounds().pad(.1));
+}
+
+function updateMapFromSelection(){
+  if(!mapInstance || !fromC || !toC) return;
+  const fObj = ROUTE_ALL.find(c=>c.id===fromC);
+  const tObj = ROUTE_ALL.find(c=>c.id===toC);
+  if(!fObj||!tObj) return;
+
+  const routeIds = ROUTE_ALL.map(c=>c.id);
+  const fi = routeIds.indexOf(fromC), ti = routeIds.indexOf(toC);
+  const seg = ROUTE_ALL.slice(Math.min(fi,ti), Math.max(fi,ti)+1).filter(c=>c.id!=='bord'&&c.id!=='bord2');
+  const pts = seg.map(c=>([c.lat,c.lng]));
+  const distKm = Math.round(getRouteDistance(seg));
+  const hrs = Math.round(distKm/80*10)/10;
+
+  if(routeLayer) mapInstance.removeLayer(routeLayer);
+  routeLayer = L.polyline(pts,{color:'#3ecf7a',weight:4,opacity:.85}).addTo(mapInstance);
+
+  // from marker
+  L.circleMarker([fObj.lat,fObj.lng],{radius:9,fillColor:'#3ecf7a',color:'#fff',weight:2,fillOpacity:1}).addTo(mapInstance)
+    .bindTooltip(`🟢 ${fObj.full}`,{permanent:true,direction:'top',className:'leaflet-lbl'});
+  L.circleMarker([tObj.lat,tObj.lng],{radius:9,fillColor:'#f5c542',color:'#fff',weight:2,fillOpacity:1}).addTo(mapInstance)
+    .bindTooltip(`🟡 ${tObj.full}`,{permanent:true,direction:'top',className:'leaflet-lbl'});
+
+  mapInstance.fitBounds(routeLayer.getBounds().pad(.1));
+  document.getElementById('mapDist').textContent = distKm+'км';
+  document.getElementById('mapTime').textContent = '~'+hrs+'год';
+
+  const gmUrl = `https://www.google.com/maps/dir/${fObj.lat},${fObj.lng}/${tObj.lat},${tObj.lng}`;
+  document.getElementById('gmapsLink').href = gmUrl;
+  document.getElementById('mapInfo').textContent = `${fObj.full} → ${tObj.full}`;
+}
+
+function updateMapFromAddresses(){
+  const sc = document.getElementById('s-city').value;
+  const ss = document.getElementById('s-street').value;
+  const sh = document.getElementById('s-house').value;
+  const rc = document.getElementById('r-city').value;
+  const rs = document.getElementById('r-street').value;
+  const rh = document.getElementById('r-house').value;
+  if(sc&&ss&&rc&&rs){
+    const from = encodeURIComponent(`${ss} ${sh}, ${sc}`);
+    const to   = encodeURIComponent(`${rs} ${rh}, ${rc}`);
+    const url  = `https://www.google.com/maps/dir/${from}/${to}`;
+    document.getElementById('gmapsLink').href = url;
+    document.getElementById('mapInfo').textContent = `${sc} → ${rc}`;
+  }
+}
+
+function getRouteDistance(pts){
+  let d=0;
+  for(let i=1;i<pts.length;i++){
+    const [la1,ln1]=[pts[i-1].lat,pts[i-1].lng];
+    const [la2,ln2]=[pts[i].lat,pts[i].lng];
+    const R=6371;
+    const dLa=(la2-la1)*Math.PI/180, dLn=(ln2-ln1)*Math.PI/180;
+    const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)**2;
+    d+=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  return d;
+}
+
+// ═══════════════════════════════════════════════
+//  FUEL STOPS (every ~3h, real motorway stations)
+// ═══════════════════════════════════════════════
+const FUEL_STOPS = [
+  {
+    id:'fuel1', atMin:120, label:'⛽ ОККО — Львів (Стрийська)',
+    note:'АЗС ОККО, вул. Стрийська · перша зупинка перед кордоном',
+    gmaps:'https://maps.google.com/maps/search/OKKO+АЗС+Львів+Стрийська/@49.8107,24.0089,15z',
+    lat:49.8107, lng:24.0089, country:'🇺🇦'
+  },
+  {
+    id:'fuel2', atMin:270, label:'⛽ Orlen — Краків Південь (A4)',
+    note:'Orlen, autostrada A4 Kraków Południe · зупинка 15 хв після кордону',
+    gmaps:'https://maps.google.com/maps/search/Orlen+stacja+A4+Krakow/@50.0123,20.0456,15z',
+    lat:50.0123, lng:20.0456, country:'🇵🇱'
+  },
+  {
+    id:'fuel3', atMin:450, label:'⛽ OMV — Острава (D1)',
+    note:'OMV Čerpací stanice, dálnice D1 Ostrava · зупинка 15 хв',
+    gmaps:'https://maps.google.com/maps/search/OMV+čerpací+stanice+Ostrava+D1/@49.8311,18.2897,15z',
+    lat:49.8311, lng:18.2897, country:'🇨🇿'
+  },
+  {
+    id:'fuel4', atMin:640, label:'⛽ Shell — Прага Північ (D8)',
+    note:'Shell Select, D8 Praha Sever · велика зупинка 30 хв, ресторан, душ',
+    gmaps:'https://maps.google.com/maps/search/Shell+Praha+D8+North/@50.1812,14.3677,15z',
+    lat:50.1812, lng:14.3677, country:'🇨🇿'
+  },
+  {
+    id:'fuel5', atMin:820, label:'⛽ Aral — Дрезден Південь (A17)',
+    note:'Aral Autohof Freital, A17 Dresden · зупинка 15 хв',
+    gmaps:'https://maps.google.com/maps/search/Aral+Autohof+Dresden+A17/@50.9782,13.7245,15z',
+    lat:50.9782, lng:13.7245, country:'🇩🇪'
+  },
+  {
+    id:'fuel6', atMin:1000, label:'⛽ TotalEnergies — A5 Рассельштайн',
+    note:'TotalEnergies Autohof Rasselstein, A5 · зупинка 15 хв · між Франкфуртом і Мангаймом',
+    gmaps:'https://maps.google.com/maps/search/TotalEnergies+Autohof+A5+Rasselstein/@49.8822,8.5134,15z',
+    lat:49.8822, lng:8.5134, country:'🇩🇪'
+  },
+  {
+    id:'fuel7', atMin:1180, label:'⛽ Aral — Штутгарт (A8)',
+    note:'Aral Autohof Leonberg, A8 Stuttgart · зупинка 15 хв',
+    gmaps:'https://maps.google.com/maps/search/Aral+Autohof+Leonberg+A8/@48.7934,9.0156,15z',
+    lat:48.7934, lng:9.0156, country:'🇩🇪'
+  },
+];
+
+// ═══════════════════════════════════════════════
+//  TRAVEL TIME DATA (Google Maps based, minutes)
+// ═══════════════════════════════════════════════
+
+// Cumulative minutes from Lviv departure point
+const STOPS_SCHEDULE = [
+  {id:'ivf',   min:-120, label:'Івано-Франківськ',flag:'🇺🇦', note:'Відправлення о 08:00', type:'dep'},
+  {id:'chern', min:-175, label:'Чернівці',         flag:'🇺🇦', note:'Відправлення о 07:00 · крюк через Чернівці', type:'dep'},
+  {id:'lviv',  min:0,    label:'Львів',             flag:'🇺🇦', note:'Відправлення зі Львова / пересадка', type:'dep'},
+  {id:'bord',  min:70,   label:'Кордон UA/PL',      flag:'🚧', note:'Перетин кордону Шегині / Медика · ~60–120 хв очікування', type:'bord'},
+  {id:'krak',  min:220,  label:'Краків',            flag:'🇵🇱', note:'Зупинка ~20 хв · посадка / висадка пасажирів', type:'stop'},
+  {id:'bord2', min:295,  label:'Кордон PL/CZ',      flag:'🚧', note:'Зона Шенген · прикордонного контролю немає', type:'bord'},
+  {id:'ostr',  min:340,  label:'Острава',           flag:'🇨🇿', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'prag',  min:520,  label:'Прага',             flag:'🇨🇿', note:'Зупинка ~30 хв · технічна пауза, обід', type:'stop'},
+  {id:'dres',  min:645,  label:'Дрезден',           flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'leip',  min:705,  label:'Лейпциг',           flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'erf',   min:765,  label:'Ерфурт',            flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'frank', min:925,  label:'Франкфурт',         flag:'🇩🇪', note:'Зупинка ~20 хв', type:'stop'},
+  {id:'darm',  min:965,  label:'Дармштадт',         flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'mannh', min:1000, label:'Мангайм',           flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'heid',  min:1025, label:'Гайдельберг',       flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'karl',  min:1065, label:'Карлсруе',          flag:'🇩🇪', note:'Зупинка ~15 хв', type:'stop'},
+  {id:'stutt', min:1130, label:'Штутгарт',          flag:'🇩🇪', note:'Зупинка ~20 хв', type:'stop'},
+  {id:'frei',  min:1235, label:'Фрайбург',          flag:'🇩🇪', note:'Кінцева зупинка', type:'dest'},
+];
+
+// Extra minutes from each origin city to Lviv pickup
+const ORIGIN_TO_LVIV = { ivf:120, chern:175, lviv:0 };
+// Lviv departure time base = 10:00 (IFF departs 08:00, arrives Lviv 10:00)
+const BASE_DEPART_HOUR = 10; // 10:00 from Lviv
+
+function minsToHHMM(total){
+  const h=Math.floor(total/60), m=total%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function minsToReadable(m){
+  const h=Math.floor(m/60), mn=m%60;
+  if(h===0) return mn+'хв';
+  if(mn===0) return h+'год';
+  return h+'год '+mn+'хв';
+}
+function addMinsToBase(baseH, baseM, addMins){
+  const total = baseH*60 + baseM + addMins;
+  return minsToHHMM(total % 1440); // wrap at 24h for display
+}
+
+function renderTravelTime(){
+  if(!fromC || !toC){ document.getElementById('ttimeSection').style.display='none'; return; }
+
+  const schedule = STOPS_SCHEDULE.filter(s=>s.id!=='bord2'||true); // include borders
+  const fIdx = schedule.findIndex(s=>s.id===fromC);
+  const tIdx = schedule.findIndex(s=>s.id===toC);
+  if(fIdx<0 || tIdx<0){ document.getElementById('ttimeSection').style.display='none'; return; }
+
+  const isForward = fIdx <= tIdx;
+  const sliceStart = Math.min(fIdx,tIdx);
+  const sliceEnd   = Math.max(fIdx,tIdx);
+  let slice = schedule.slice(sliceStart, sliceEnd+1);
+  if(!isForward) slice = [...slice].reverse();
+
+  const fromMin = schedule[fIdx].min;
+  const toMin   = schedule[tIdx].min;
+  const drivingMins = Math.abs(toMin - fromMin);
+
+  // Calculate departure hour so that origin stop = 08:00
+  const depH=8, depM=0;
+
+  const allStops = slice.map((s,i)=>{
+    const isFirst = i===0, isLast = i===slice.length-1;
+    const diffFromOrigin = isForward ? (s.min - fromMin) : (fromMin - s.min);
+    const type = isFirst?'dep': isLast?'dest': (s.id==='bord'||s.id==='bord2')?'bord':'stop';
+    return {...s, absMin: diffFromOrigin, type};
+  });
+
+  document.getElementById('ttimeSection').style.display='block';
+  const fObj = ROUTE_ALL.find(c=>c.id===fromC);
+  const tObj = ROUTE_ALL.find(c=>c.id===toC);
+  document.getElementById('ttRouteLabel').textContent = (fObj?.full||fromC)+' → '+(tObj?.full||toC);
+  document.getElementById('ttTotal').textContent = '~'+minsToReadable(drivingMins);
+
+  // Google Maps link
+  document.getElementById('ttGmapsLink').href =
+    `https://www.google.com/maps/dir/?api=1&origin=${fObj?.lat||''},${fObj?.lng||''}&destination=${tObj?.lat||''},${tObj?.lng||''}&travelmode=driving`;
+
+  const sl = document.getElementById('ttStopline');
+  sl.innerHTML='';
+  allStops.forEach((s,i)=>{
+    const isLast = i===allStops.length-1;
+    const clockTime = addMinsToBase(depH, depM, s.absMin);
+    const dotCls = s.type==='dep'?'tl-dot dep':s.type==='dest'?'tl-dot dest':(s.id==='bord'||s.id==='bord2')?'tl-dot bord':'tl-dot stop';
+    const timeLabel = s.type==='dep'? '⏩ відправлення' : s.type==='dest'? '🏁 прибуття' : (s.id==='bord'||s.id==='bord2')? '🛂 кордон' : '🕐 приблизно';
+    const item=document.createElement('div');
+    item.className='tl-item';
+    item.innerHTML=`
+      <div class="tl-left">
+        <div class="${dotCls}"></div>
+        ${!isLast?'<div class="tl-line"></div>':''}
+      </div>
+      <div class="tl-right">
+        <div class="tl-city">${s.flag} ${s.label}</div>
+        <div class="tl-time">${timeLabel} <span style="color:var(--gold)">${clockTime}</span></div>
+        <div class="tl-note">${s.note}</div>
+      </div>`;
+    sl.appendChild(item);
+
+    // Insert fuel stops between this stop and the next
+    if(!isLast){
+      const nextStop = allStops[i+1];
+      const currentMin = isForward ? STOPS_SCHEDULE.find(x=>x.id===s.id)?.min : (fromMin - (STOPS_SCHEDULE.find(x=>x.id===s.id)?.min - fromMin));
+      const nextMin    = isForward ? STOPS_SCHEDULE.find(x=>x.id===nextStop.id)?.min : null;
+      const fromMinAbs = s.absMin;
+      const toMinAbs   = nextStop.absMin;
+
+      FUEL_STOPS.forEach(f=>{
+        const fAbsMin = isForward ? (f.atMin - fromMin) : (fromMin - f.atMin);
+        if(fAbsMin > fromMinAbs && fAbsMin < toMinAbs){
+          const fTime = addMinsToBase(depH, depM, fAbsMin);
+          const fItem = document.createElement('div');
+          fItem.className='tl-item';
+          fItem.style.opacity='0.85';
+          fItem.innerHTML=`
+            <div class="tl-left">
+              <div class="tl-dot fuel"></div>
+              <div class="tl-line"></div>
+            </div>
+            <div class="tl-right" style="padding-bottom:14px;">
+              <div class="tl-city" style="font-size:12px;">${f.country} ${f.label}</div>
+              <div class="tl-time">⛽ зупинка 15 хв · <span style="color:var(--gold)">${fTime}</span></div>
+              <div class="tl-note">${f.note}</div>
+              <a href="${f.gmaps}" target="_blank" class="tl-fuel-link">📍 Відкрити на Google Maps</a>
+            </div>`;
+          sl.appendChild(fItem);
+        }
+      });
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  BOOKING FLOW
+// ═══════════════════════════════════════════════
+function setDir(d){
+  dir=d; fromC=null; toC=null; selDate=null;
+  document.querySelectorAll('.dir-card').forEach(el=>el.classList.remove('sel'));
+  const card=document.getElementById('dir-'+d);
+  if(card) card.classList.add('sel');
+  document.getElementById('dateSection').style.display='none';
+  const ttEl=document.getElementById('ttimeSection'); if(ttEl) ttEl.style.display='none';
+  const cfg=DIR_CONFIG[d]||DIR_CONFIG['ua-de'];
+  const rtEl=document.getElementById('routeSectionTitle');
+  const vnEl=document.getElementById('vignetteNote');
+  if(rtEl) rtEl.textContent=cfg.routeTitle+' (150k+ міст, ≤7 км відхилення)';
+  if(vnEl) vnEl.textContent=cfg.vignette;
+  renderCities(); renderRouteVis(); checkS1();
+}
+
+function renderRouteVis(){
+  const el = document.getElementById('routeVis');
+  el.innerHTML='';
+  ROUTE_ALL.forEach((c,i)=>{
+    const node=document.createElement('div');
+    node.className='stop-node';
+    let dotClass='sn-dot';
+    if(c.id===fromC) dotClass+=' from';
+    if(c.id===toC) dotClass+=' to';
+    node.innerHTML=`<div class="${dotClass}"></div><div class="sn-name">${c.name}</div>`;
+    if(c.id!=='bord' && c.id!=='bord2') node.onclick=()=>quickSelect(c.id);
+    el.appendChild(node);
+    if(i<ROUTE_ALL.length-1){
+      const ln=document.createElement('div');
+      ln.className='sline'+(c.border?'':c.id==='lviv'?' cross':'');
+      el.appendChild(ln);
+    }
+  });
+}
+
+function quickSelect(id){
+  const cfg=DIR_CONFIG[dir]||DIR_CONFIG['ua-de'];
+  const fromIds=cfg.from.map(c=>c.id);
+  const toIds=cfg.to.map(c=>c.id);
+  if(fromIds.includes(id)){ fromC=id; }
+  else if(toIds.includes(id)){ toC=id; }
+  if(fromC&&toC) renderDates();
+  renderCities(); renderRouteVis(); updateMapFromSelection(); renderTravelTime(); checkS1();
+}
+
+function renderCities(){
+  const cfg=DIR_CONFIG[dir]||DIR_CONFIG['ua-de'];
+  document.getElementById('fromLabel').textContent=cfg.fromLbl;
+  document.getElementById('toLabel').textContent=cfg.toLbl;
+  const fg=document.getElementById('fromGrid'), tg=document.getElementById('toGrid');
+  fg.innerHTML=''; tg.innerHTML='';
+  cfg.from.forEach(c=>{
+    fg.appendChild(makeChip(c, fromC===c.id ? 'sel-from' : '', ()=>{ fromC=c.id; renderCities(); renderRouteVis(); if(toC)renderDates(); updateMapFromSelection(); renderTravelTime(); checkS1(); }));
+  });
+  cfg.to.forEach(c=>{
+    tg.appendChild(makeChip(c, toC===c.id ? 'sel-to' : '', ()=>{ toC=c.id; renderCities(); renderRouteVis(); renderDates(); updateMapFromSelection(); renderTravelTime(); checkS1(); }));
+  });
+}
+
+function makeChip(c, cls, cb){
+  const el=document.createElement('div');
+  el.className='city-chip '+(cls||'');
+  el.onclick=cb;
+  el.innerHTML=`<span class="cc-flag">${c.flag}</span><div><div class="cc-name">${c.full}</div><div class="cc-pop">${c.pop}</div></div>`;
+  return el;
+}
+
+function renderDates(){
+  document.getElementById('dateSection').style.display='block';
+  const dg=document.getElementById('dateGrid');
+  dg.innerHTML='';
+  const days=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const months=['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];
+  const cfg=DIR_CONFIG[dir]||DIR_CONFIG['ua-de'];
+  const today=new Date(); let d=new Date(today);
+  if(cfg.sat){ while(d.getDay()!==6) d.setDate(d.getDate()+1); }
+  else { while(d.getDay()!==1) d.setDate(d.getDate()+1); }
+  [9,5,3,0,7,8][0]; // dummy
+  const seatArr=[9,5,3,0,7,8,4];
+  for(let i=0;i<6;i++){
+    const seats=seatArr[i%7];
+    const key=d.toISOString().slice(0,10);
+    const fullLabel=`${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+    // 24-HOUR CUTOFF: departure is at 08:00 on the travel day
+    const departureTime = new Date(d);
+    departureTime.setHours(8, 0, 0, 0);
+    const cutoffTime = new Date(departureTime.getTime() - 24*60*60*1000); // 24h before
+    const soldOut = seats===0 || new Date() > cutoffTime;
+    const cutoffLabel = new Date() > cutoffTime && seats>0 ? '🔒 Продаж закрито' : null;
+
+    const el=document.createElement('div');
+    el.className='date-card'+(soldOut?' full':'')+(selDate===key?' sel':'');
+    if(!soldOut) el.onclick=()=>{ selDate=key; selDateFull=fullLabel; renderDates(); checkS1(); };
+    const sc=soldOut?'s-no':seats<=3?'s-few':'s-ok';
+    const sl=cutoffLabel||( soldOut?'🚫 Немає':seats<=3?`🔴 ${seats} місця`:`🟢 ${seats} місць`);
+    el.innerHTML=`<div class="dc-day">${days[d.getDay()]}</div><div class="dc-num">${d.getDate()}</div><div class="dc-mon">${months[d.getMonth()]}</div><div class="dc-seats ${sc}">${sl}</div>`;
+    dg.appendChild(el);
+    d.setDate(d.getDate()+7);
+  }
+}
+
+function checkS1(){
+  document.getElementById('btnS1').disabled = !(fromC&&toC&&selDate);
+}
+
+function goStep(n){
+  currentStep=n;
+  document.querySelectorAll('.step-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  updateStepBar(n);
+  calcPrice();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateStepBar(n){
+  for(let i=1;i<=4;i++){
+    const c=document.getElementById('stC'+i);
+    const it=document.getElementById('stItem'+i);
+    const ln=document.getElementById('stL'+i);
+    if(!c) continue;
+    c.className='st-circle'+(i<n?' don':i===n?' act':'');
+    c.textContent=i<n?'✓':i;
+    if(it) it.className='st'+(i<=n?' act':'')+(i<n?' don':'');
+    if(ln) ln.className='st-line'+(i<n?' don':'');
+  }
+}
+
+// ── PASSENGERS ──
+function chPass(t,d){
+  if(t==='adult'){ adults=Math.max(1,Math.min(8,adults+d)); document.getElementById('adultN').textContent=adults; document.getElementById('am').disabled=adults<=1; }
+  if(t==='child'){ children=Math.max(0,Math.min(4,children+d)); document.getElementById('childN').textContent=children; document.getElementById('cm').disabled=children<=0; document.getElementById('pbCR').style.display=children>0?'flex':'none'; }
+  if(t==='bag'){   bags=Math.max(0,Math.min(3,bags+d)); document.getElementById('bagN').textContent=bags; document.getElementById('bm').disabled=bags<=0; document.getElementById('pbBR').style.display=bags>0?'flex':'none'; }
+  calcPrice();
+}
+
+function togParcel(){ parcelOn=!parcelOn; document.getElementById('pToggle').classList.toggle('on',parcelOn); document.getElementById('pForm').classList.toggle('vis',parcelOn); document.getElementById('pbPR').style.display=parcelOn?'flex':'none'; calcPrice(); }
+function calcParcel(){ parcelCost=Math.max(20,Math.round((parseFloat(document.getElementById('pw').value)||2)*7+10)); document.getElementById('pPrice').textContent='€'+parcelCost; calcPrice(); }
+
+function getBasePrice(){
+  // Use the non-UA city for pricing (works for all 6 directions)
+  const uaIds=UA_CITIES.map(c=>c.id);
+  const destId = !uaIds.includes(toC) ? toC : fromC;
+  return PRICES[destId]||80;
+}
+
+function calcPrice(){
+  const base=getBasePrice();
+  const childP=Math.round(base*.7);
+  const total=adults*base+children*childP+bags*10+(parcelOn?parcelCost:0);
+  document.getElementById('pbTL').textContent='Квиток × '+adults;
+  document.getElementById('pbTV').textContent='€'+(adults*base);
+  document.getElementById('pbCL').textContent='Дитина × '+children;
+  document.getElementById('pbCV').textContent='€'+(children*childP);
+  document.getElementById('pbBV').textContent='€'+(bags*10);
+  document.getElementById('pbPV').textContent='€'+parcelCost;
+  document.getElementById('pbTotal').textContent='€'+total;
+  document.getElementById('p4Total').textContent='€'+total;
+  window._total='€'+total;
+}
+
+function selPay(m){ payMethod=m; ['card','paypal','cash'].forEach(id=>document.getElementById('pm-'+id).classList.toggle('sel',id===m)); }
+
+function confirmBooking(){
+  const name=document.getElementById('s-name').value.trim();
+  const phone=document.getElementById('s-phone').value.trim();
+  if(!name||!phone){ return; }
+  const fObj=ROUTE_ALL.find(c=>c.id===fromC);
+  const tObj=ROUTE_ALL.find(c=>c.id===toC);
+  const code='TL-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  document.getElementById('tFrom').textContent=fObj?.full||'—';
+  document.getElementById('tTo').textContent=tObj?.full||'—';
+  document.getElementById('tDate').textContent=selDateFull;
+  document.getElementById('tPickup').textContent=(document.getElementById('s-street').value||'—')+' '+document.getElementById('s-house').value;
+  document.getElementById('tDrop').textContent=(document.getElementById('r-street').value||'—')+' '+document.getElementById('r-house').value;
+  document.getElementById('tPass').textContent=(adults+children)+' пас.';
+  document.getElementById('tPrice').textContent=window._total||'—';
+  document.getElementById('tCode').textContent=code;
+
+  // Add to CRM
+  const newB={
+    id:code, name, phone, wa:document.getElementById('s-wa').value||phone,
+    email:document.getElementById('cfEmail').value, tg:document.getElementById('cfTg').value,
+    fromCity:document.getElementById('s-city').value, fromStreet:document.getElementById('s-street').value+' '+document.getElementById('s-house').value,
+    fromZip:document.getElementById('s-zip').value, fromNote:document.getElementById('s-note').value,
+    toCity:document.getElementById('r-city').value, toStreet:document.getElementById('r-street').value+' '+document.getElementById('r-house').value,
+    toZip:document.getElementById('r-zip').value, recipient:document.getElementById('r-name').value||name, recPhone:document.getElementById('r-phone').value,
+    route:(fObj?.full||'?')+' → '+(tObj?.full||'?'), date:selDateFull,
+    adults, children, bags, parcel:parcelOn?'Так':'Ні', price:window._total||'—', status:'pending',
+    note:document.getElementById('cfNote').value,
+    fromLat:fObj?.lat||0, fromLng:fObj?.lng||0, toLat:tObj?.lat||0, toLng:tObj?.lng||0
+  };
+  localBookings.unshift(newB);
+  renderCRMTable();
+  goStep(5);
+}
+
+function resetBooking(){
+  fromC=null; toC=null; selDate=null; adults=1; children=0; bags=0; parcelOn=false; dir='ua-de';
+  document.querySelectorAll('.dir-card').forEach(el=>el.classList.remove('sel'));
+  const initCard=document.getElementById('dir-ua-de'); if(initCard) initCard.classList.add('sel');
+  document.getElementById('adultN').textContent='1'; document.getElementById('childN').textContent='0'; document.getElementById('bagN').textContent='0';
+  document.getElementById('am').disabled=true; document.getElementById('cm').disabled=true; document.getElementById('bm').disabled=true;
+  document.getElementById('pToggle').classList.remove('on'); document.getElementById('pForm').classList.remove('vis');
+  document.getElementById('dateSection').style.display='none';
+  document.getElementById('btnS1').disabled=true;
+  renderCities(); renderRouteVis(); drawMainRoute();
+  goStep(1);
+}
+
+// ═══════════════════════════════════════════════
+//  BUS FLEET + DEMO SCHEDULES
+// ═══════════════════════════════════════════════
+const BUS_FLEET = [
+  { id:1, name:'Mercedes Sprinter 319', seats:16, plate:'ІФ 1234 АА', driver:'Ковальчук Михайло', phone:'+380 67 111 2233' },
+  { id:2, name:'VW Crafter TDI',        seats:14, plate:'ІФ 5678 ВВ', driver:'Гнатюк Петро',       phone:'+380 67 222 3344' },
+  { id:3, name:'Ford Transit Custom',   seats:9,  plate:'ЛВ 9012 СС', driver:'Семків Роман',       phone:'+380 96 333 4455' },
+  { id:4, name:'Mercedes Sprinter 316', seats:16, plate:'ЛВ 3456 ДД', driver:'Мельник Василь',     phone:'+380 67 444 5566' },
+  { id:5, name:'Iveco Daily 70C',       seats:18, plate:'ІФ 7890 ЕЕ', driver:'Петрів Андрій',      phone:'+380 95 555 6677' },
+  { id:6, name:'Peugeot Boxer L4',      seats:12, plate:'ЛВ 2345 ЖЖ', driver:'Луцак Ігор',         phone:'+380 67 666 7788' },
+];
+
+// Demo schedules (next 3 departures for each bus)
+function getBusSchedules(busId){
+  const routes = [
+    { route:'ІФ → Мангайм', date:'Субота, 01 Бер 2025', sold:12, total:16, status:'confirmed' },
+    { route:'Мангайм → Львів', date:'Понеділок, 10 Бер 2025', sold:9,  total:16, status:'pending' },
+    { route:'ІФ → Прага',    date:'Субота, 15 Бер 2025', sold:7,  total:14, status:'pending' },
+  ];
+  return routes.map(r=>({...r, total: BUS_FLEET.find(b=>b.id===busId)?.seats||14}));
+}
+
+let selectedBusId = null;
+let crmView = 'bookings'; // 'bookings' | 'fleet' | 'builder'
+
+function switchCRM(view){
+  crmView = view;
+  const tableWrap = document.querySelector('.crm-main > div[style="overflow-x:auto;"]') ||
+                    document.querySelector('.crm-main > div:has(#crmTbody)');
+  document.getElementById('crmFleetPanel').style.display   = view==='fleet'    ? 'block' : 'none';
+  document.getElementById('crmBuilderPanel').style.display = view==='builder'  ? 'block' : 'none';
+  document.querySelectorAll('.crm-filters, .crm-main > div[style*="overflow-x"]').forEach(el=>{
+    el.style.display = view==='bookings' ? '' : 'none';
+  });
+  if(view==='fleet') renderFleet();
+  if(view==='builder') renderBusSelector();
+}
+
+function renderFleet(){
+  const grid = document.getElementById('fleetGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  BUS_FLEET.forEach(bus=>{
+    const schedules = getBusSchedules(bus.id);
+    const card = document.createElement('div');
+    card.className = 'bus-card';
+    card.innerHTML = `
+      <div class="bus-card-head">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="bus-number">#${bus.id}</div>
+            <div>
+              <div class="bus-name">${bus.name}</div>
+              <div style="font-size:11px;color:var(--muted);">🚗 ${bus.plate} · ${bus.driver}</div>
+            </div>
+          </div>
+        </div>
+        <div class="bus-seats-badge">🪑 ${bus.seats} міст</div>
+      </div>
+      <div class="bus-sched">
+        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Найближчі рейси</div>
+        ${schedules.map(s=>{
+          const pct = Math.round(s.sold/s.total*100);
+          const cls = pct>=90?'full':pct>=70?'few':'ok';
+          const txt = pct>=90?'Місць немає':`${s.total-s.sold} вільних`;
+          return `<div class="sched-row">
+            <div><div class="sched-route">${s.route}</div><div class="sched-date">${s.date}</div></div>
+            <div class="sched-avail ${cls}">${txt}</div>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:6px;">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">Продаж квитків:</div>
+          <div style="height:6px;background:var(--b2);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;background:var(--green);width:${Math.round(schedules[0].sold/schedules[0].total*100)}%;border-radius:3px;transition:width .5s;"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${schedules[0].sold}/${schedules[0].total} місць продано</div>
+        </div>
+      </div>
+      <div class="bus-btn-row">
+        <button class="bus-act-btn primary" onclick="selectedBusId=${bus.id}; switchCRM('builder');">🗺 Маршрут</button>
+        <button class="bus-act-btn sec" onclick="alert('Дзвонити водієві: ${bus.phone}')">📞 ${bus.driver.split(' ')[0]}</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function renderBusSelector(){
+  const sel = document.getElementById('rbBusSelector');
+  if(!sel) return;
+  sel.innerHTML = '';
+  BUS_FLEET.forEach(bus=>{
+    const el = document.createElement('div');
+    el.className = 'rb-bus' + (selectedBusId===bus.id?' sel':'');
+    el.onclick = ()=>{ selectedBusId=bus.id; renderBusSelector(); };
+    el.innerHTML = `<div class="rb-bus-num">#${bus.id}</div><div class="rb-bus-info">${bus.name.split(' ').slice(0,2).join(' ')}<br>🪑 ${bus.seats} міст</div>`;
+    sel.appendChild(el);
+  });
+}
+
+function generateAIRoute(){
+  if(!selectedBusId){ alert('Оберіть мікроавтобус'); return; }
+  const bus = BUS_FLEET.find(b=>b.id===selectedBusId);
+  // Filter bookings for this bus's upcoming route
+  const busBookings = localBookings.slice(0,Math.min(localBookings.length, bus.seats));
+  const stopsEl = document.getElementById('aiRouteStops');
+  if(!stopsEl) return;
+
+  // Sort by departure city (UA origin cities first, then by route order)
+  const sorted = [...busBookings].sort((a,b)=>{
+    const aIdx = STOPS_SCHEDULE.findIndex(s=>s.label===a.fromCity||s.id===a.fromCity);
+    const bIdx = STOPS_SCHEDULE.findIndex(s=>s.label===b.fromCity||s.id===b.fromCity);
+    return aIdx - bIdx;
+  });
+
+  const depTime = 480; // 08:00
+  stopsEl.innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+      Мікроавтобус #${bus.id} · ${bus.name} · Місць: ${bus.seats} · Продано: ${busBookings.length}<br>
+      🤖 ШІ впорядкував збір пасажирів у хронологічному порядку маршруту. Продаж квитків закрито за 24 год до відправлення.
+    </div>
+    ${sorted.map((b,i)=>{
+      const pickTime = minsToHHMM(depTime + (i * 8));
+      const dropInfo = b.toCity ? `→ ${b.toCity}` : '';
+      return `<div class="passenger-stop" style="margin-bottom:8px;">
+        <div class="ps-order">${i+1}</div>
+        <div class="ps-info">
+          <div class="ps-name">${b.name}</div>
+          <div class="ps-addr">📍 ${b.fromCity}, ${b.fromStreet} ${dropInfo}</div>
+          <div class="ps-addr">📞 ${b.phone}</div>
+        </div>
+        <div class="ps-time">${pickTime}</div>
+      </div>`;
+    }).join('')}
+    ${sorted.length===0?'<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Немає куплених квитків для цього рейсу</div>':''}
+    <div style="margin-top:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">⛽ Зупинки на заправках (кожні 3 год)</div>
+      ${FUEL_STOPS.map(f=>{
+        const fTime = minsToHHMM(depTime + f.atMin);
+        return `<div class="passenger-stop" style="margin-bottom:8px;border-left:2px solid var(--orange);background:rgba(255,159,46,.05);">
+          <div class="ps-order" style="background:var(--orange);">⛽</div>
+          <div class="ps-info">
+            <div class="ps-name" style="color:var(--orange);">${f.label}</div>
+            <div class="ps-addr">${f.note}</div>
+            <div class="ps-addr"><a href="${f.gmaps}" target="_blank" style="color:var(--accent2);">📍 Google Maps</a></div>
+          </div>
+          <div class="ps-time" style="color:var(--orange);">${fTime}<br><span style="font-size:9px;color:var(--muted);">15 хв</span></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  EXPORT FUNCTIONS
+// ═══════════════════════════════════════════════
+function exportCSV(){
+  const headers = ['ID','Пасажир','Телефон','WhatsApp','Email','Telegram','Звідки місто','Адреса звідки','Куди місто','Адреса куди','Маршрут','Дата','Дорослих','Дітей','Багаж','Посилка','Ціна','Статус','Примітка'];
+  const rows = localBookings.map(b=>[
+    b.id,b.name,b.phone,b.wa,b.email,b.tg,
+    b.fromCity,b.fromStreet,b.toCity,b.toStreet,
+    b.route,b.date,b.adults,b.children,b.bags,b.parcel,
+    b.price,b.status,b.note
+  ].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows].join('\n');
+  downloadFile('transline-bookings.csv', 'text/csv;charset=utf-8;', '\uFEFF'+csv);
+}
+
+function exportXLSX(){
+  // Create a basic HTML table that Excel can open
+  const headers = ['ID','Пасажир','Телефон','Маршрут','Дата','Адреса збору','Адреса доставки','Ціна','Статус'];
+  let html = `<table border="1"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+  localBookings.forEach(b=>{
+    html+=`<tr><td>${b.id}</td><td>${b.name}</td><td>${b.phone}</td><td>${b.route}</td><td>${b.date}</td><td>${b.fromCity}, ${b.fromStreet}</td><td>${b.toCity}, ${b.toStreet}</td><td>${b.price}</td><td>${b.status}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>${html}</body></html>`;
+  downloadFile('transline-bookings.xls','application/vnd.ms-excel', xls);
+}
+
+function exportPDF(){
+  const win = window.open('','_blank');
+  const rows = localBookings.map(b=>`<tr><td>${b.id}</td><td>${b.name}</td><td>${b.phone}</td><td>${b.route}</td><td>${b.date}</td><td>${b.fromCity},<br>${b.fromStreet}</td><td>${b.toCity},<br>${b.toStreet}</td><td><b>${b.price}</b></td><td>${b.status}</td></tr>`).join('');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>TransLine Бронювання</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:20px;}
+    h1{color:#1a3a6b;font-size:18px;margin-bottom:4px;}
+    .meta{color:#666;font-size:10px;margin-bottom:16px;}
+    table{border-collapse:collapse;width:100%;}
+    th{background:#1a3a6b;color:#fff;padding:8px 6px;text-align:left;font-size:10px;}
+    td{padding:7px 6px;border-bottom:1px solid #e5e7eb;vertical-align:top;}
+    tr:nth-child(even)td{background:#f8fafc;}
+    @media print{@page{size:A4 landscape;margin:15mm;}}
+  </style></head><body>
+    <h1>🚌 TransLine — Список Бронювань</h1>
+    <div class="meta">Сформовано: ${new Date().toLocaleString('uk-UA')} · Всього: ${localBookings.length} записів</div>
+    <table><thead><tr><th>ID</th><th>Пасажир</th><th>Телефон</th><th>Маршрут</th><th>Дата</th><th>Адреса збору</th><th>Адреса доставки</th><th>Ціна</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 500);
+}
+
+function downloadFile(name, type, content){
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ═══════════════════════════════════════════════
+//  CRM
+// ═══════════════════════════════════════════════
+function renderCRMTable(){
+  const tbody=document.getElementById('crmTbody');
+  let data=[...localBookings];
+  if(crmFilter!=='all') data=data.filter(b=>b.status===crmFilter);
+  if(crmSearch) data=data.filter(b=>b.name.toLowerCase().includes(crmSearch.toLowerCase())||b.id.toLowerCase().includes(crmSearch.toLowerCase())||b.fromCity.toLowerCase().includes(crmSearch.toLowerCase())||b.toCity.toLowerCase().includes(crmSearch.toLowerCase()));
+  
+  tbody.innerHTML='';
+  data.forEach(b=>{
+    const tr=document.createElement('tr');
+    if(selectedBooking&&selectedBooking.id===b.id) tr.classList.add('sel-row');
+    const stMap={confirmed:'st-confirmed',pending:'st-pending',cancelled:'st-cancelled',onboard:'st-onboard'};
+    const stTxt={confirmed:'✅ Підтверджено',pending:'⏳ Очікує',cancelled:'❌ Скасовано',onboard:'🚌 В дорозі'};
+    const gmUrl=`https://www.google.com/maps/dir/${b.fromLat},${b.fromLng}/${b.toLat},${b.toLng}`;
+    tr.innerHTML=`
+      <td><span class="booking-id">${b.id}</span></td>
+      <td><span class="passenger-name">${b.name}</span></td>
+      <td><div class="route-cell">${b.route.replace('→','<span class="route-arr">→</span>')}</div></td>
+      <td style="white-space:nowrap;font-size:12px;">${b.date}</td>
+      <td style="font-size:12px;">${b.fromCity}, ${b.fromStreet}</td>
+      <td style="font-size:12px;">${b.toCity}, ${b.toStreet}</td>
+      <td style="font-size:12px;white-space:nowrap;">${b.phone}</td>
+      <td class="price-col">${b.price}</td>
+      <td><span class="status-badge ${stMap[b.status]||''}">${stTxt[b.status]||b.status}</span></td>
+      <td><a class="map-btn" href="${gmUrl}" target="_blank">🧭 Маршрут</a></td>
+    `;
+    tr.onclick=()=>showDetail(b);
+    tbody.appendChild(tr);
+  });
+
+  const total=localBookings.length;
+  const today=localBookings.filter(b=>b.status!=='cancelled').length;
+  const pend=localBookings.filter(b=>b.status==='pending').length;
+  document.getElementById('crmTotal').textContent='Всього: '+total;
+  document.getElementById('crmToday').textContent='Активних: '+today;
+  document.getElementById('crmPend').textContent='Очікують: '+pend;
+}
+
+function showDetail(b){
+  selectedBooking=b;
+  renderCRMTable();
+  document.getElementById('crmEmptyState').style.display='none';
+  document.getElementById('crmDetailContent').style.display='block';
+  const stMap={confirmed:'st-confirmed',pending:'st-pending',cancelled:'st-cancelled',onboard:'st-onboard'};
+  const stTxt={confirmed:'✅ Підтверджено',pending:'⏳ Очікує',cancelled:'❌ Скасовано',onboard:'🚌 В дорозі'};
+  document.getElementById('dId').textContent=b.id;
+  document.getElementById('dStatus').innerHTML=`<span class="status-badge ${stMap[b.status]}">${stTxt[b.status]}</span>`;
+  document.getElementById('dName').textContent=b.name;
+  document.getElementById('dPhone').innerHTML=`<a href="tel:${b.phone}" style="color:var(--accent2);">${b.phone}</a>`;
+  document.getElementById('dWa').innerHTML=`<a href="https://wa.me/${b.wa.replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--green);">${b.wa} 💬</a>`;
+  document.getElementById('dEmail').textContent=b.email||'—';
+  document.getElementById('dTg').textContent=b.tg||'—';
+  document.getElementById('dFromCity').textContent=b.fromCity;
+  document.getElementById('dFromStreet').textContent=b.fromStreet;
+  document.getElementById('dFromZip').textContent=b.fromZip||'—';
+  document.getElementById('dFromNote').textContent=b.fromNote||'—';
+  document.getElementById('dToCity').textContent=b.toCity;
+  document.getElementById('dToStreet').textContent=b.toStreet;
+  document.getElementById('dToZip').textContent=b.toZip||'—';
+  document.getElementById('dRecipient').textContent=(b.recipient||'—')+(b.recPhone?' · '+b.recPhone:'');
+  document.getElementById('dRoute').textContent=b.route;
+  document.getElementById('dDate').textContent=b.date;
+  document.getElementById('dPass').textContent=b.adults+' дор.'+(b.children>0?', '+b.children+' дит.':'')+(b.bags>0?', '+b.bags+' багаж':'');
+  document.getElementById('dParcel').textContent=b.parcel;
+  document.getElementById('dPrice').textContent=b.price;
+  document.getElementById('dNote').textContent=b.note||'—';
+  initDetailMap(b);
+}
+
+function initDetailMap(b){
+  const el=document.getElementById('detailMap');
+  el.innerHTML='';
+  if(detailMapInstance){ detailMapInstance.remove(); detailMapInstance=null; }
+  detailMapInstance=L.map('detailMap',{zoomControl:false,attributionControl:false}).setView([(b.fromLat+b.toLat)/2,(b.fromLng+b.toLng)/2],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(detailMapInstance);
+  const pts=[[b.fromLat,b.fromLng],[b.toLat,b.toLng]];
+  L.polyline(pts,{color:'#3ecf7a',weight:3}).addTo(detailMapInstance);
+  L.circleMarker([b.fromLat,b.fromLng],{radius:7,fillColor:'#3ecf7a',color:'#fff',weight:2,fillOpacity:1}).addTo(detailMapInstance).bindTooltip('📍 '+b.fromCity,{permanent:false});
+  L.circleMarker([b.toLat,b.toLng],{radius:7,fillColor:'#f5c542',color:'#fff',weight:2,fillOpacity:1}).addTo(detailMapInstance).bindTooltip('🏁 '+b.toCity,{permanent:false});
+  const bounds=L.latLngBounds(pts);
+  detailMapInstance.fitBounds(bounds.pad(.3));
+  setTimeout(()=>detailMapInstance.invalidateSize(),100);
+}
+
+function changeStatus(s){
+  if(!selectedBooking) return;
+  selectedBooking.status=s;
+  const idx=localBookings.findIndex(b=>b.id===selectedBooking.id);
+  if(idx>-1) localBookings[idx].status=s;
+  renderCRMTable();
+  showDetail(selectedBooking);
+}
+
+function openNavigation(){
+  if(!selectedBooking) return;
+  const b=selectedBooking;
+  const url=`https://www.google.com/maps/dir/${encodeURIComponent(b.fromStreet+', '+b.fromCity)}/${encodeURIComponent(b.toStreet+', '+b.toCity)}`;
+  window.open(url,'_blank');
+}
+
+function filterCRM(f,btn){
+  crmFilter=f;
+  document.querySelectorAll('.crf').forEach(b=>b.classList.remove('act'));
+  if(btn) btn.classList.add('act');
+  renderCRMTable();
+}
+
+function searchCRM(q){ crmSearch=q; renderCRMTable(); }
+
+// ═══════════════════════════════════════════════
+//  VIEW SWITCHER
+// ═══════════════════════════════════════════════
+function switchView(v){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.vsw').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+v).classList.add('active');
+  event.target.classList.add('active');
+  if(v==='client'){ setTimeout(()=>{ if(!mapInstance){ initMap(); } mapInstance.invalidateSize(); },50); }
+  if(v==='crm'){ renderCRMTable(); }
+}
+
+// ═══════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  renderRouteVis();
+  renderCities();
+  calcPrice();
+  renderCRMTable();
+  setTimeout(()=>initMap(), 200);
+});
+</script>
+<!-- ═══════════════════════════════════════════════
+  VAPI.AI — ВАЛЕРІЙ ШІ-АСИСТЕНТ
+═══════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.umd.js"></script>
+
+<!-- VALERY STYLES -->
+<style>
+.valery-float{position:fixed;bottom:24px;right:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+
+.valery-bubble{
+  background:var(--surf2);border:1px solid rgba(62,207,122,.25);border-radius:16px;border-bottom-right-radius:4px;
+  padding:14px 16px;max-width:280px;font-size:13px;line-height:1.6;color:var(--tx);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);animation:slideUp .3s ease;
+  display:none;
+}
+.valery-bubble.vis{display:block;}
+.valery-bubble strong{color:var(--green);}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.valery-btn{
+  display:flex;align-items:center;gap:11px;
+  background:linear-gradient(135deg,#0f1a2e,#1a2540);
+  border:1.5px solid rgba(62,207,122,.45);border-radius:50px;
+  padding:11px 18px 11px 12px;cursor:pointer;
+  box-shadow:0 8px 32px rgba(0,0,0,.55),0 0 0 1px rgba(62,207,122,.1);
+  transition:all .25s;user-select:none;
+}
+.valery-btn:hover{border-color:var(--green);transform:translateY(-1px);box-shadow:0 12px 40px rgba(62,207,122,.18);}
+.valery-btn.active-call{border-color:var(--red);background:linear-gradient(135deg,#1a0f0f,#2a1515);animation:activePulse 1.5s infinite;}
+.valery-btn.connecting{border-color:var(--gold);animation:activePulse 1s infinite;}
+@keyframes activePulse{0%,100%{box-shadow:0 8px 32px rgba(0,0,0,.5);}50%{box-shadow:0 8px 40px rgba(62,207,122,.25);}}
+
+.valery-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,#1d4ed8,#7c3aed);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  position:relative;flex-shrink:0;transition:all .3s;
+}
+.valery-avatar.talking{animation:talkPulse .6s infinite alternate;}
+@keyframes talkPulse{from{box-shadow:0 0 0 0 rgba(62,207,122,.4);}to{box-shadow:0 0 0 8px rgba(62,207,122,.0);}}
+
+.valery-online-dot{
+  position:absolute;bottom:1px;right:1px;width:11px;height:11px;
+  background:var(--green);border:2px solid #0b0d13;border-radius:50%;
+}
+.valery-online-dot.busy{background:var(--red);}
+.valery-online-dot.connecting{background:var(--gold);}
+
+.valery-text{display:flex;flex-direction:column;gap:1px;}
+.valery-name{font-size:14px;font-weight:800;color:var(--tx);letter-spacing:-.01em;}
+.valery-sub{font-size:11px;color:var(--green);font-weight:600;}
+.valery-sub.busy{color:var(--red);}
+.valery-sub.connecting{color:var(--gold);}
+
+.valery-end-btn{
+  background:rgba(255,82,82,.15);border:1.5px solid rgba(255,82,82,.4);
+  border-radius:50px;padding:8px 16px;font-size:12px;font-weight:800;color:var(--red);
+  cursor:pointer;display:none;transition:all .2s;
+}
+.valery-end-btn.vis{display:block;}
+.valery-end-btn:hover{background:rgba(255,82,82,.25);}
+
+/* Sound wave animation during call */
+.sound-wave{display:none;align-items:center;gap:2px;height:16px;}
+.sound-wave.vis{display:flex;}
+.sw-bar{width:3px;border-radius:2px;background:var(--green);}
+.sw-bar:nth-child(1){animation:wave .8s infinite .0s;}
+.sw-bar:nth-child(2){animation:wave .8s infinite .1s;}
+.sw-bar:nth-child(3){animation:wave .8s infinite .2s;}
+.sw-bar:nth-child(4){animation:wave .8s infinite .3s;}
+.sw-bar:nth-child(5){animation:wave .8s infinite .4s;}
+@keyframes wave{0%,100%{height:4px;opacity:.4;}50%{height:16px;opacity:1;}}
+</style>
+
+<div class="valery-float" id="valeryFloat">
+
+  <!-- Bubble -->
+  <div class="valery-bubble" id="valeryBubble">
+    👋 Я <strong>Валерій</strong> — ШІ-асистент TransLine.<br>
+    Натисніть кнопку і я відповім голосом на будь-яке запитання про маршрут, ціни або бронювання.<br><br>
+    Хочете поговорити з <strong>живою людиною?</strong> Просто скажіть — переключу миттєво. 📞
+  </div>
+
+  <!-- End call button -->
+  <button class="valery-end-btn" id="valeryEndBtn" onclick="endValeryCall()">📵 Завершити дзвінок</button>
+
+  <!-- Main button -->
+  <div class="valery-btn" id="valeryBtn" onclick="toggleValeryCall()">
+    <div class="valery-avatar" id="valeryAvatar">
+      🤖
+      <div class="valery-online-dot" id="valeryDot"></div>
+    </div>
+    <div class="valery-text">
+      <div class="valery-name">Валерій — ШІ</div>
+      <div class="valery-sub" id="valerySub">● Онлайн · Натисніть для дзвінка</div>
+    </div>
+    <div class="sound-wave" id="soundWave">
+      <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
+      <div class="sw-bar"></div><div class="sw-bar"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  VAPI ВАЛЕРІЙ — ГОЛОСОВИЙ АІ-АСИСТЕНТ
+// ═══════════════════════════════════════════════
+const VAPI_PUBLIC_KEY = '007dbf03-9b9b-4c58-8a0e-66764c0aab2f';
+const HUMAN_PHONE    = '+380660121041';
+
+let vapi = null;
+let valeryCallActive = false;
+let valeryBubbleShown = false;
+
+const VALERY_SYSTEM_PROMPT = `Ти — Валерій, голосовий ШІ-асистент транспортної компанії TransLine. Говориш виключно українською мовою. Голос спокійний, чіткий, ввічливий та компетентний. Ти допомагаєш клієнтам краще і точніше ніж звичайний оператор.
+
+На початку кожної розмови ОБОВ'ЯЗКОВО представляйся: "Доброго дня! Мене звати Валерій, я штучний інтелект компанії TransLine. Якщо захочете поговорити з живою людиною — скажіть про це, і я миттєво вас переключу. Чим можу допомогти?"
+
+МАРШРУТИ ТА МІСТА:
+Ми обслуговуємо 16 міст по маршруту Україна — Польща — Чехія — Німеччина.
+Україна: Івано-Франківськ, Чернівці, Львів.
+Польща: Краків.
+Чехія: Острава, Прага.
+Німеччина: Дрезден, Лейпциг, Ерфурт, Франкфурт, Дармштадт, Мангайм, Гайдельберг, Карлсруе, Штутгарт, Фрайбург.
+
+НАПРЯМКИ: Україна↔Німеччина, Україна↔Чехія, Україна↔Польща.
+Відправлення з України: щосуботи о 08:00.
+Відправлення з Німеччини/Чехії: понеділок-вівторок, за запитом.
+
+НАШІ КЛЮЧОВІ ПЕРЕВАГИ (пояснюй цей при кожному запиті):
+- Ми НЕ відхиляємось від траси на 15-30 кілометрів щоб завезти чужу посилку — це головна проблема інших перевізників.
+- Максимальне відхилення від траси — 7 кілометрів. Крапка.
+- Тільки міста з населенням 150 тисяч і більше.
+- Зупинки на АЗС кожні 3 години, строго 15 хвилин.
+- Ви знаєте точний час кожної зупинки.
+
+ЦІНИ (приблизні):
+Краків: 45 євро. Острава: 55 євро. Прага: 70 євро.
+Дрезден: 90 євро. Лейпциг: 95 євро. Ерфурт: 100 євро.
+Франкфурт: 120 євро. Дармштадт: 115 євро. Мангайм: 115 євро.
+Гайдельберг: 115 євро. Карлсруе: 120 євро. Штутгарт: 125 євро. Фрайбург: 130 євро.
+Дитяче місце: знижка 30 відсотків. Багаж до 20 кілограм включено. Посилки приймаються окремо.
+
+ПРОДАЖ КВИТКІВ: закривається за 24 години до відправлення.
+БРОНЮВАННЯ: через сайт transline.ua або я можу записати ваші дані прямо зараз.
+
+ТРАНСФЕР ДО ЛЮДИНИ:
+Якщо клієнт просить живого оператора — відповідай: "Звісно, зараз переключаю вас на оператора. Один момент!" і виконуй функцію transferCall.
+
+Розмовляй природно, не перераховуй пункти списком. Відповідай стисло і по суті. Якщо не знаєш відповіді — скажи що передаєш питання оператору.`;
+
+function initVapi(){
+  if(vapi) return;
+  try {
+    vapi = new Vapi(VAPI_PUBLIC_KEY);
+
+    vapi.on('call-start', ()=>{
+      valeryCallActive = true;
+      setValeryState('active');
+    });
+
+    vapi.on('call-end', ()=>{
+      valeryCallActive = false;
+      setValeryState('idle');
+    });
+
+    vapi.on('speech-start', ()=>{
+      document.getElementById('valeryAvatar').classList.add('talking');
+      document.getElementById('soundWave').classList.add('vis');
+    });
+
+    vapi.on('speech-end', ()=>{
+      document.getElementById('valeryAvatar').classList.remove('talking');
+      document.getElementById('soundWave').classList.remove('vis');
+    });
+
+    vapi.on('error', (e)=>{
+      console.error('Vapi error:', e);
+      setValeryState('idle');
+      valeryCallActive = false;
+    });
+
+  } catch(e) {
+    console.error('Vapi init error:', e);
+  }
+}
+
+function toggleValeryCall(){
+  if(!valeryBubbleShown){
+    valeryBubbleShown = true;
+    document.getElementById('valeryBubble').classList.add('vis');
+    setTimeout(()=>{ document.getElementById('valeryBubble').classList.remove('vis'); }, 5000);
+    return;
+  }
+  if(valeryCallActive){
+    endValeryCall();
+  } else {
+    startValeryCall();
+  }
+}
+
+function startValeryCall(){
+  initVapi();
+  if(!vapi) return;
+  setValeryState('connecting');
+
+  vapi.start({
+    transcriber:{
+      provider:'deepgram',
+      model:'nova-2',
+      language:'uk'
+    },
+    model:{
+      provider:'openai',
+      model:'gpt-4o-mini',
+      messages:[{ role:'system', content:VALERY_SYSTEM_PROMPT }],
+      temperature:0.65,
+      maxTokens:300,
+      tools:[{
+        type:'function',
+        function:{
+          name:'transferCall',
+          description:'Переключити клієнта на живого оператора коли клієнт просить людину',
+          parameters:{ type:'object', properties:{}, required:[] }
+        }
+      }]
+    },
+    voice:{
+      provider:'azure',
+      voiceId:'uk-UA-OstapNeural'
+    },
+    name:'Валерій',
+    firstMessage:'Доброго дня! Мене звати Валерій, я штучний інтелект компанії TransLine. Якщо захочете поговорити з живою людиною — скажіть, і я миттєво переключу. Чим можу допомогти?',
+    endCallMessage:'Дякую за дзвінок. Гарної поїздки з TransLine!',
+    endCallPhrases:['до побачення','бувайте','дякую бувай'],
+  });
+}
+
+function endValeryCall(){
+  if(vapi && valeryCallActive) vapi.stop();
+  setValeryState('idle');
+  valeryCallActive = false;
+}
+
+function setValeryState(state){
+  const btn  = document.getElementById('valeryBtn');
+  const sub  = document.getElementById('valerySub');
+  const dot  = document.getElementById('valeryDot');
+  const end  = document.getElementById('valeryEndBtn');
+  const wave = document.getElementById('soundWave');
+
+  btn.classList.remove('active-call','connecting');
+  dot.classList.remove('busy','connecting');
+  end.classList.remove('vis');
+  wave.classList.remove('vis');
+  sub.classList.remove('busy','connecting');
+
+  if(state==='connecting'){
+    btn.classList.add('connecting');
+    dot.classList.add('connecting');
+    sub.classList.add('connecting');
+    sub.textContent = '⏳ Підключаємось...';
+  } else if(state==='active'){
+    btn.classList.add('active-call');
+    dot.classList.add('busy');
+    sub.classList.add('busy');
+    sub.textContent = '🔴 Розмова активна';
+    end.classList.add('vis');
+  } else {
+    sub.textContent = '● Онлайн · Натисніть для дзвінка';
+  }
+}
+
+// Show bubble after 3 seconds on first load
+setTimeout(()=>{
+  if(!valeryBubbleShown){
+    document.getElementById('valeryBubble').classList.add('vis');
+    setTimeout(()=>document.getElementById('valeryBubble').classList.remove('vis'), 7000);
+  }
+}, 3000);
+</script>
+</body>
+</html>
+
