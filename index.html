@@ -894,7 +894,7 @@ body{font-size:15px;line-height:1.5;}
           <div class="pill pill-g" style="margin-bottom:14px;">🔒 Безпечна оплата · Скасування за 48 год безкоштовно</div>
           <div class="btn-row">
             <button class="btn-s" onclick="goStep(3)">← Назад</button>
-            <button class="btn-p" onclick="confirmBooking()">🎉 Підтвердити і оплатити</button>
+            <button class="btn-p" onclick="openPayModal()">🎉 Підтвердити і оплатити</button>
           </div>
         </div>
 
@@ -2116,6 +2116,246 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderCRMTable();
   setTimeout(()=>initMap(), 200);
 });
+</script>
+<!-- ═══════════════════════════════════════════════
+  PAYMENT MODAL
+═══════════════════════════════════════════════ -->
+<style>
+.pay-modal-overlay{
+  position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.pay-modal-overlay.vis{display:flex;animation:fadeIn .2s ease;}
+.pay-modal{
+  background:var(--surf);border-radius:24px 24px 0 0;
+  width:100%;max-width:520px;padding:0 0 40px;
+  animation:slideUp .3s ease;
+  max-height:95vh;overflow-y:auto;
+}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.pm-handle{width:40px;height:4px;background:var(--b3);border-radius:2px;margin:12px auto 0;}
+.pm-header{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.pm-title{font-size:18px;font-weight:900;color:var(--tx);}
+.pm-close{width:32px;height:32px;border-radius:50%;background:var(--surf3);border:none;color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.pm-amount{margin:16px 24px;background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(122,174,255,.06));border:1px solid rgba(79,142,247,.2);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+.pm-amount-lbl{font-size:13px;color:var(--muted);font-weight:600;}
+.pm-amount-val{font-size:28px;font-weight:900;color:var(--accent2);font-family:'JetBrains Mono',monospace;}
+.pm-methods{display:flex;gap:8px;padding:0 24px;margin-bottom:20px;}
+.pm-method{flex:1;border:1.5px solid var(--b2);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surf2);}
+.pm-method.sel{border-color:var(--accent);background:rgba(79,142,247,.1);}
+.pm-method-icon{font-size:22px;margin-bottom:4px;}
+.pm-method-name{font-size:11px;font-weight:700;color:var(--tx);}
+.pm-body{padding:0 24px;}
+.pm-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;margin-top:14px;}
+.pm-input{width:100%;background:var(--surf2);border:1.5px solid var(--b2);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--tx);font-family:'Manrope',sans-serif;outline:none;transition:border .2s;}
+.pm-input:focus{border-color:var(--accent);}
+.pm-input::placeholder{color:var(--muted);}
+.pm-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.pm-secure{display:flex;align-items:center;gap:8px;background:rgba(62,207,122,.06);border:1px solid rgba(62,207,122,.15);border-radius:10px;padding:10px 14px;margin:16px 0 20px;font-size:11px;color:var(--green);font-weight:600;}
+.pm-pay-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--accent),#7c3aed);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Manrope',sans-serif;transition:all .2s;box-shadow:0 6px 24px rgba(79,142,247,.35);}
+.pm-pay-btn:hover{transform:translateY(-1px);box-shadow:0 10px 32px rgba(79,142,247,.45);}
+.pm-pay-btn:active{transform:translateY(0);}
+.pm-card-icons{display:flex;gap:6px;margin-bottom:4px;}
+.pm-card-icon{height:22px;background:var(--surf3);border-radius:4px;padding:3px 7px;font-size:11px;font-weight:800;color:var(--muted);}
+
+/* Processing overlay */
+.pm-processing{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;}
+.pm-processing.vis{display:flex;}
+.pm-spinner{width:56px;height:56px;border:3px solid var(--b2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.pm-proc-title{font-size:17px;font-weight:800;margin-bottom:8px;}
+.pm-proc-sub{font-size:13px;color:var(--muted);}
+
+/* Success */
+.pm-success{display:none;flex-direction:column;align-items:center;padding:36px 24px;text-align:center;}
+.pm-success.vis{display:flex;}
+.pm-suc-icon{font-size:56px;margin-bottom:16px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes popIn{from{transform:scale(0);}to{transform:scale(1);}}
+.pm-suc-title{font-size:20px;font-weight:900;margin-bottom:8px;color:var(--green);}
+.pm-suc-sub{font-size:13px;color:var(--muted);line-height:1.6;}
+.pm-suc-code{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:var(--gold);margin:16px 0;padding:12px 24px;background:var(--surf2);border-radius:10px;border:1px dashed var(--gold);}
+</style>
+
+<!-- Modal HTML -->
+<div class="pay-modal-overlay" id="payModal" onclick="closePayModalOutside(event)">
+  <div class="pay-modal" id="payModalBox">
+    <div class="pm-handle"></div>
+
+    <!-- Header -->
+    <div class="pm-header">
+      <div class="pm-title">💳 Оплата</div>
+      <button class="pm-close" onclick="closePayModal()">✕</button>
+    </div>
+
+    <!-- Amount -->
+    <div class="pm-amount">
+      <div>
+        <div class="pm-amount-lbl">До оплати</div>
+        <div class="pm-amount-val" id="pmAmountVal">€—</div>
+      </div>
+      <div style="font-size:28px;">🔒</div>
+    </div>
+
+    <!-- Payment form -->
+    <div id="pmForm">
+      <!-- Methods -->
+      <div class="pm-methods">
+        <div class="pm-method sel" id="pm-card" onclick="selectPayMethod('card')">
+          <div class="pm-method-icon">💳</div>
+          <div class="pm-method-name">Картка</div>
+        </div>
+        <div class="pm-method" id="pm-apple" onclick="selectPayMethod('apple')">
+          <div class="pm-method-icon">🍎</div>
+          <div class="pm-method-name">Apple Pay</div>
+        </div>
+        <div class="pm-method" id="pm-google" onclick="selectPayMethod('google')">
+          <div class="pm-method-icon">🇬</div>
+          <div class="pm-method-name">Google Pay</div>
+        </div>
+        <div class="pm-method" id="pm-cash" onclick="selectPayMethod('cash')">
+          <div class="pm-method-icon">💵</div>
+          <div class="pm-method-name">Готівка</div>
+        </div>
+      </div>
+
+      <!-- Card form -->
+      <div class="pm-body" id="pmCardForm">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+          <div class="pm-label" style="margin:0;">Номер картки</div>
+          <div class="pm-card-icons">
+            <div class="pm-card-icon">VISA</div>
+            <div class="pm-card-icon">MC</div>
+            <div class="pm-card-icon">МИР</div>
+          </div>
+        </div>
+        <input class="pm-input" id="pmCardNum" type="tel" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNum(this)">
+
+        <div class="pm-row">
+          <div>
+            <div class="pm-label">Термін дії</div>
+            <input class="pm-input" id="pmExpiry" type="tel" inputmode="numeric" placeholder="MM / РР" maxlength="7" oninput="formatExpiry(this)">
+          </div>
+          <div>
+            <div class="pm-label">CVV / CVC</div>
+            <input class="pm-input" id="pmCvv" type="tel" inputmode="numeric" placeholder="•••" maxlength="3">
+          </div>
+        </div>
+
+        <div class="pm-label">Ім'я на картці</div>
+        <input class="pm-input" id="pmName" type="text" placeholder="IVAN PETRENKO" style="text-transform:uppercase;">
+
+        <div class="pm-secure">🔒 Дані передаються в зашифрованому вигляді · SSL 256-bit</div>
+        <button class="pm-pay-btn" onclick="processPayment()">Оплатити <span id="pmBtnAmount">€—</span></button>
+      </div>
+
+      <!-- Apple/Google Pay -->
+      <div class="pm-body" id="pmQuickForm" style="display:none;">
+        <div style="background:var(--surf2);border:1px solid var(--b2);border-radius:14px;padding:20px;text-align:center;margin-bottom:20px;">
+          <div style="font-size:40px;margin-bottom:12px;" id="pmQuickIcon">🍎</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;" id="pmQuickName">Apple Pay</div>
+          <div style="font-size:12px;color:var(--muted);">Підтвердіть оплату на вашому пристрої</div>
+        </div>
+        <button class="pm-pay-btn" onclick="processPayment()">Оплатити через <span id="pmQuickBtnName">Apple Pay</span></button>
+      </div>
+
+      <!-- Cash -->
+      <div class="pm-body" id="pmCashForm" style="display:none;">
+        <div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2);border-radius:14px;padding:20px;margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--gold);">💵 Оплата готівкою</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.6;">Оплата здійснюється готівкою водієві в день поїздки. Місце бронюється на 24 години.</div>
+        </div>
+        <button class="pm-pay-btn" style="background:linear-gradient(135deg,#b7791f,#d97706);" onclick="processPayment()">Підтвердити бронювання</button>
+      </div>
+    </div>
+
+    <!-- Processing -->
+    <div class="pm-processing" id="pmProcessing">
+      <div class="pm-spinner"></div>
+      <div class="pm-proc-title">Обробляємо оплату...</div>
+      <div class="pm-proc-sub">Будь ласка, не закривайте вікно</div>
+    </div>
+
+    <!-- Success -->
+    <div class="pm-success" id="pmSuccess">
+      <div class="pm-suc-icon">✅</div>
+      <div class="pm-suc-title">Оплачено!</div>
+      <div class="pm-suc-code" id="pmSucCode">TL-????</div>
+      <div class="pm-suc-sub">Квиток надіслано на вашу пошту.<br>Деталі поїздки збережено у CRM.</div>
+      <button class="pm-pay-btn" style="margin-top:20px;" onclick="closePayModal(); confirmBooking();">Чудово! 🎉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPayMethod = 'card';
+
+function openPayModal(){
+  const total = window._total || document.getElementById('p4Total')?.textContent || '€—';
+  document.getElementById('pmAmountVal').textContent = total;
+  document.getElementById('pmBtnAmount').textContent = total;
+  document.getElementById('payModal').classList.add('vis');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePayModal(){
+  document.getElementById('payModal').classList.remove('vis');
+  document.body.style.overflow = '';
+  // Reset
+  document.getElementById('pmForm').style.display = '';
+  document.getElementById('pmProcessing').classList.remove('vis');
+  document.getElementById('pmSuccess').classList.remove('vis');
+}
+
+function closePayModalOutside(e){
+  if(e.target === document.getElementById('payModal')) closePayModal();
+}
+
+function selectPayMethod(m){
+  currentPayMethod = m;
+  document.querySelectorAll('.pm-method').forEach(el=>el.classList.remove('sel'));
+  document.getElementById('pm-'+m).classList.add('sel');
+  document.getElementById('pmCardForm').style.display   = m==='card'   ? 'block' : 'none';
+  document.getElementById('pmQuickForm').style.display  = (m==='apple'||m==='google') ? 'block' : 'none';
+  document.getElementById('pmCashForm').style.display   = m==='cash'   ? 'block' : 'none';
+  if(m==='apple'){ document.getElementById('pmQuickIcon').textContent='🍎'; document.getElementById('pmQuickName').textContent='Apple Pay'; document.getElementById('pmQuickBtnName').textContent='Apple Pay'; }
+  if(m==='google'){ document.getElementById('pmQuickIcon').textContent='🇬'; document.getElementById('pmQuickName').textContent='Google Pay'; document.getElementById('pmQuickBtnName').textContent='Google Pay'; }
+}
+
+function formatCardNum(el){
+  let v = el.value.replace(/\D/g,'').slice(0,16);
+  el.value = v.replace(/(\d{4})(?=\d)/g,'$1 ');
+}
+
+function formatExpiry(el){
+  let v = el.value.replace(/\D/g,'').slice(0,4);
+  if(v.length>=2) v = v.slice(0,2)+' / '+v.slice(2);
+  el.value = v;
+}
+
+function processPayment(){
+  // Validation for card
+  if(currentPayMethod === 'card'){
+    const num = document.getElementById('pmCardNum').value.replace(/\s/g,'');
+    const exp = document.getElementById('pmExpiry').value;
+    const cvv = document.getElementById('pmCvv').value;
+    if(num.length < 16){ document.getElementById('pmCardNum').focus(); return; }
+    if(exp.length < 7){  document.getElementById('pmExpiry').focus(); return; }
+    if(cvv.length < 3){  document.getElementById('pmCvv').focus(); return; }
+  }
+
+  // Show processing
+  document.getElementById('pmForm').style.display = 'none';
+  document.getElementById('pmProcessing').classList.add('vis');
+
+  // Simulate payment processing
+  setTimeout(()=>{
+    document.getElementById('pmProcessing').classList.remove('vis');
+    const code = 'TL-' + Math.random().toString(36).slice(2,6).toUpperCase();
+    document.getElementById('pmSucCode').textContent = code;
+    document.getElementById('pmSuccess').classList.add('vis');
+  }, 2200);
+}
 </script>
 <!-- ═══════════════════════════════════════════════
   КНОПКА ДЗВІНКА
