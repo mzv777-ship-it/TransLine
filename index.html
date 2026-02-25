@@ -1809,6 +1809,7 @@ function confirmBooking(){
     fromLat:fObj?.lat||0, fromLng:fObj?.lng||0, toLat:tObj?.lat||0, toLng:tObj?.lng||0
   };
   localBookings.unshift(newB);
+  saveBookingToSupabase(newB); // ← Supabase
   renderCRMTable();
   goStep(5);
 }
@@ -2240,6 +2241,103 @@ function switchView(v){
 }
 
 // ═══════════════════════════════════════════════
+//  SUPABASE INTEGRATION
+// ═══════════════════════════════════════════════
+const SUPABASE_URL  = 'https://sbgkvchkwomteajbdeep.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZ2t2Y2hrd29tdGVhamJkZWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMTI4MDUsImV4cCI6MjA4NzU4ODgwNX0.jlLWUqPSR_FuOdoiznK7EOie0xBeoQUCeRhWXEuC7kA';
+
+// Supabase REST helpers
+async function sbInsert(table, data){
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+    return await r.json();
+  } catch(e){ console.warn('Supabase insert error:', e); return null; }
+}
+
+async function sbSelect(table, order='created_at'){
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=${order}.desc`, {
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`
+      }
+    });
+    return await r.json();
+  } catch(e){ console.warn('Supabase select error:', e); return []; }
+}
+
+async function sbUpdate(table, id, data){
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+  } catch(e){ console.warn('Supabase update error:', e); }
+}
+
+// Save booking to Supabase
+async function saveBookingToSupabase(b){
+  const row = {
+    id: b.id, name: b.name, phone: b.phone,
+    wa: b.wa, email: b.email, tg: b.tg,
+    from_city: b.fromCity, to_city: b.toCity,
+    from_street: b.fromStreet, to_street: b.toStreet,
+    from_zip: b.fromZip||'', to_zip: b.toZip||'',
+    route: b.route, date: b.date,
+    adults: b.adults||1, children: b.children||0,
+    bags: b.bags||0, parcel: b.parcel||'Ні',
+    price: b.price, status: b.status||'pending',
+    note: b.note||'',
+    from_lat: b.fromLat||0, from_lng: b.fromLng||0,
+    to_lat: b.toLat||0, to_lng: b.toLng||0
+  };
+  const result = await sbInsert('bookings', row);
+  if(result) console.log('✅ Supabase: збережено', b.id);
+  return result;
+}
+
+// Load bookings from Supabase into CRM
+async function loadBookingsFromSupabase(){
+  const rows = await sbSelect('bookings');
+  if(!rows || !Array.isArray(rows)) return;
+  // Merge with localBookings (Supabase takes priority)
+  const ids = new Set(localBookings.map(b=>b.id));
+  rows.forEach(r=>{
+    if(!ids.has(r.id)){
+      localBookings.push({
+        id:r.id, name:r.name, phone:r.phone,
+        wa:r.wa, email:r.email, tg:r.tg,
+        fromCity:r.from_city, toCity:r.to_city,
+        fromStreet:r.from_street, toStreet:r.to_street,
+        fromZip:r.from_zip, toZip:r.to_zip,
+        route:r.route, date:r.date,
+        adults:r.adults, children:r.children,
+        bags:r.bags, parcel:r.parcel,
+        price:r.price, status:r.status, note:r.note,
+        fromLat:r.from_lat, fromLng:r.from_lng,
+        toLat:r.to_lat, toLng:r.to_lng
+      });
+    }
+  });
+  renderCRMTable();
+  console.log(`✅ Supabase: завантажено ${rows.length} бронювань`);
+}
+
+// ═══════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2248,6 +2346,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   calcPrice();
   renderCRMTable();
   setTimeout(()=>initMap(), 200);
+  // Load bookings from Supabase
+  setTimeout(()=>loadBookingsFromSupabase(), 500);
 });
 </script>
 <!-- ═══════════════════════════════════════════════
