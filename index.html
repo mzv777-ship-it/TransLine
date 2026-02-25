@@ -70,7 +70,7 @@ body{
   font-size:20px;font-weight:800;
   color:var(--tx);letter-spacing:-.03em;
 }
-.logo-name span{color:var(--accent2);}
+.logo-name span{color:var(--gold);}
 
 .view-switcher{
   display:flex;gap:2px;
@@ -106,17 +106,14 @@ body{
    BOOKING LAYOUT
 ═══════════════════════════ */
 .booking-layout{
-  display:grid;grid-template-columns:520px 1fr;
-  width:100%;min-height:calc(100vh - 56px);
+  display:flex;flex-direction:column;
+  width:100%;max-width:900px;
+  margin:0 auto;padding:0 20px;
 }
-.booking-form-col{overflow-y:auto;border-right:1px solid var(--b1);}
-.booking-map-col{
-  position:sticky;top:56px;
-  height:calc(100vh - 56px);
-  display:flex;flex-direction:column;overflow-y:auto;
-}
+.booking-form-col{width:100%;}
+.booking-map-col{width:100%;}
 
-.bform{padding:32px 28px 180px;}
+.bform{padding:32px 0 60px;}
 
 /* STEP BAR */
 .step-bar{display:flex;align-items:center;margin-bottom:36px;}
@@ -372,17 +369,11 @@ select.finput option{background:var(--surf);}
 .pill-b{background:rgba(0,230,118,.04);color:var(--accent2);border:1px solid rgba(0,230,118,.1);}
 
 /* MAP */
-.map-header{
-  padding:14px 18px;border-bottom:1px solid var(--b1);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.mh-title{font-size:14px;font-weight:700;letter-spacing:-.01em;}
+.map-header{padding:16px 0 10px;display:flex;align-items:center;justify-content:space-between;}
+.mh-title{font-size:15px;font-weight:700;letter-spacing:-.01em;}
 .mh-info{font-size:12px;color:var(--muted);}
-#map{width:100%;height:340px;flex-shrink:0;}
-.map-footer{
-  padding:12px 18px;border-top:1px solid var(--b1);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
+#map{width:100%;height:440px;border-radius:10px;overflow:hidden;}
+.map-footer{padding:10px 0 24px;display:flex;align-items:center;justify-content:space-between;}
 .mf-stat{font-size:12px;color:var(--muted);}
 .mf-stat strong{color:var(--tx);font-weight:700;}
 .open-gmaps{
@@ -596,11 +587,11 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 #detailMap{height:200px;width:100%;}
 
 /* NEUROMARKETING PANEL */
-.nm-panel{padding:18px;display:flex;flex-direction:column;gap:14px;}
+.nm-panel{padding:24px 0;display:flex;flex-direction:column;gap:16px;}
 .nm-hero{
-  background:linear-gradient(135deg,rgba(79,142,247,.12) 0%,rgba(122,174,255,.05) 100%);
-  border:1px solid rgba(79,142,247,.25);border-radius:12px;
-  padding:18px;
+  background:linear-gradient(135deg,rgba(79,142,247,.1) 0%,rgba(122,174,255,.04) 100%);
+  border:1px solid rgba(79,142,247,.2);border-radius:14px;
+  padding:28px 24px;
 }
 .nm-hook-badge{
   display:inline-flex;align-items:center;
@@ -608,10 +599,10 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
   font-size:10px;font-weight:900;letter-spacing:.08em;
   padding:4px 10px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;
 }
-.nm-headline{font-size:21px;font-weight:900;line-height:1.2;margin-bottom:8px;letter-spacing:-.04em;}
+.nm-headline{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:10px;letter-spacing:-.04em;}
 .nm-subheadline{font-size:14px;color:var(--sub);line-height:1.6;}
 .nm-subheadline strong{color:var(--accent);}
-.nm-compare{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.nm-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .nm-col{border:1px solid var(--b1);padding:12px;display:flex;flex-direction:column;gap:7px;}
 .nm-before{border-color:rgba(255,68,68,.12);}
 .nm-after{border-color:rgba(0,230,118,.12);}
@@ -644,11 +635,11 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 .nm-arrow{color:var(--muted);font-size:11px;}
 .nm-route-note{margin-top:7px;font-size:11px;color:var(--muted);font-weight:600;}
 
-.nm-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.nm-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 .nm-stat-box{border:1px solid var(--b1);padding:11px 7px;text-align:center;}
 .nm-stat-box.accent{border-color:rgba(0,230,118,.18);}
-.nm-stat-num{font-size:18px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.1;}
-.nm-stat-box.accent .nm-stat-num{color:var(--accent);}
+.nm-stat-num{font-size:20px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.1;}
+.nm-stat-box.accent .nm-stat-num{color:var(--accent2);}
 .nm-stat-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.3;}
 
 .nm-quote{border:1px solid var(--b1);border-left:2px solid var(--gold);padding:14px;display:flex;gap:10px;}
@@ -661,7 +652,7 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 .hero-pain{
   background:linear-gradient(135deg,#0d1525 0%,#111827 40%,rgba(79,142,247,.06) 100%);
   border:1px solid rgba(79,142,247,.2);border-radius:14px;
-  padding:20px 18px;margin-bottom:18px;position:relative;overflow:hidden;
+  padding:24px;margin-bottom:20px;position:relative;overflow:hidden;
 }
 .hero-pain::before{
   content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;
@@ -675,7 +666,7 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
   padding:4px 11px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;
 }
 .hero-pain-headline{font-size:23px;font-weight:900;line-height:1.2;margin-bottom:10px;letter-spacing:-.04em;}
-.hero-pain-headline em{color:var(--accent);font-style:normal;}
+.hero-pain-headline em{color:var(--gold);font-style:normal;}
 .hero-pain-sub{font-size:14px;color:var(--sub);line-height:1.65;margin-bottom:14px;}
 .hero-pain-sub strong{color:var(--accent);}
 .hero-pills-row{display:flex;flex-wrap:wrap;gap:5px;}
@@ -703,8 +694,6 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 
 /* MOBILE */
 @media(max-width:900px){
-  .booking-layout{grid-template-columns:1fr;}
-  .booking-map-col{display:none;}
   .crm-layout{grid-template-columns:1fr;}
   .crm-detail{display:none;}
 }
@@ -796,7 +785,146 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 <div id="panel-client" class="panel active">
   <div class="booking-layout">
 
-    <!-- LEFT: FORM -->
+    <!-- NEUROMARKETING SECTION (TOP) -->
+    <div class="booking-map-col">
+
+      <!-- NEUROMARKETING INFOGRAPHIC -->
+      <div class="nm-panel" id="nmPanel">
+
+        <!-- HERO HOOK -->
+        <div class="nm-hero">
+          <div class="nm-hook-badge">🚀 ТІЛЬКИ У TRANSLINE</div>
+          <div class="nm-headline">Ваша поїздка більше не залежить від чужих зупинок</div>
+          <div class="nm-subheadline">Ми першими в Україні запровадили маршрут <strong>виключно по великих містах</strong> — без сіл, без об'їздів, без очікувань</div>
+        </div>
+
+        <!-- PAIN vs GAIN comparison -->
+        <div class="nm-compare">
+          <div class="nm-col nm-before">
+            <div class="nm-col-label">😩 Як було раніше</div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Водій забирає останнього пасажира з глухого села +40 км у бік</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Зупинки без розкладу — «ще 5 хвилин» перетворюються на 40</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Ви останній у маршруті — +6–10 годин до часу в дорозі</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Невідомо де, коли і чому зупинились</span>
+            </div>
+            <div class="nm-issue">
+              <span class="nm-i-icon">🔴</span>
+              <span>Зайвий кілометраж — зайве паливо — зайвий час</span>
+            </div>
+            <div class="nm-waste">
+              <div class="nm-waste-num">+6–10<span>год</span></div>
+              <div class="nm-waste-lbl">втрачено<br>якщо ви останній</div>
+            </div>
+          </div>
+
+          <div class="nm-col nm-after">
+            <div class="nm-col-label">✨ Як у TransLine</div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Тільки міста з населенням <strong>150 000+</strong> — жодного відхилення</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Розклад зупинок фіксований — ви знаєте час кожної точки</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Маршрут однаковий для всіх — перший ви чи останній</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Відхилення від траси — <strong>максимум 7 км</strong>, закріплено стандартом</span>
+            </div>
+            <div class="nm-win">
+              <span class="nm-w-icon">🟢</span>
+              <span>Автобан A4 / A17 / D1 — найшвидша дорога Європою</span>
+            </div>
+            <div class="nm-save">
+              <div class="nm-save-num">−3–10<span>год</span></div>
+              <div class="nm-save-lbl">економії<br>часу реально</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INFOGRAPHIC ROUTE STRIP -->
+        <div class="nm-route-vis">
+          <div class="nm-route-label">Наш маршрут — лише великі міста:</div>
+          <div class="nm-cities-row">
+            <div class="nm-city-pill ua">🇺🇦<br><span>ІФ</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill ua">🇺🇦<br><span>Львів</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill bord">🚧<br><span>кордон</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill pl">🇵🇱<br><span>Краків</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill cz">🇨🇿<br><span>Прага</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de">🇩🇪<br><span>Дрезден</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de hl">🇩🇪<br><span>Мангайм</span></div>
+            <div class="nm-arrow">›</div>
+            <div class="nm-city-pill de">🇩🇪<br><span>Фрайбург</span></div>
+          </div>
+          <div class="nm-route-note">Відхилення від траси ≤ 7 км &nbsp;·&nbsp; Тільки великі міста &nbsp;·&nbsp; Жодних сіл</div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="nm-stats-row">
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">16</div>
+            <div class="nm-stat-lbl">міст на маршруті</div>
+          </div>
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">≤7 км</div>
+            <div class="nm-stat-lbl">макс. відхилення</div>
+          </div>
+          <div class="nm-stat-box">
+            <div class="nm-stat-num">−10 год</div>
+            <div class="nm-stat-lbl">порівняно зі звичайними перевізниками</div>
+          </div>
+          <div class="nm-stat-box accent">
+            <div class="nm-stat-num">100%</div>
+            <div class="nm-stat-lbl">автобан без об'їздів</div>
+          </div>
+        </div>
+
+        <!-- TRUST QUOTE -->
+        <div class="nm-quote">
+          <div class="nm-quote-icon">💬</div>
+          <div class="nm-quote-text">
+            «Раніше їхала з Мангайму до Львова 36 годин. З TransLine — <strong>24 години</strong>. Різниця — це час, який я провела вдома з родиною, а не у чиємусь дворі посеред ночі.»
+          </div>
+          <div class="nm-quote-author">— Оксана, пасажир із Мангайму</div>
+        </div>
+
+      </div><!-- /nm-panel -->
+
+      <div class="map-header">
+        <div class="mh-title">🗺 Маршрут на карті</div>
+        <div class="mh-info" id="mapInfo">Оберіть міста для відображення маршруту</div>
+      </div>
+      <div id="map"></div>
+      <div class="map-footer">
+        <span class="mf-stat">Відстань: <strong id="mapDist">—</strong> &nbsp;|&nbsp; Час: <strong id="mapTime">—</strong></span>
+        <a id="gmapsLink" class="open-gmaps" href="#" target="_blank">Відкрити в Google Maps →</a>
+      </div>
+
+    <!-- DIVIDER -->
+    <div style="border-top:1px solid var(--b1);margin:8px 0 28px;"></div>
+
+    <!-- BOOKING FORM -->
     <div class="booking-form-col">
       <div class="bform">
 
@@ -1159,141 +1287,6 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
       </div>
     </div>
 
-    <!-- RIGHT: MAP + NEUROMARKETING -->
-    <div class="booking-map-col">
-
-      <!-- NEUROMARKETING INFOGRAPHIC -->
-      <div class="nm-panel" id="nmPanel">
-
-        <!-- HERO HOOK -->
-        <div class="nm-hero">
-          <div class="nm-hook-badge">🚀 ТІЛЬКИ У TRANSLINE</div>
-          <div class="nm-headline">Ваша поїздка більше не залежить від чужих зупинок</div>
-          <div class="nm-subheadline">Ми першими в Україні запровадили маршрут <strong>виключно по великих містах</strong> — без сіл, без об'їздів, без очікувань</div>
-        </div>
-
-        <!-- PAIN vs GAIN comparison -->
-        <div class="nm-compare">
-          <div class="nm-col nm-before">
-            <div class="nm-col-label">😩 Як було раніше</div>
-            <div class="nm-issue">
-              <span class="nm-i-icon">🔴</span>
-              <span>Водій забирає останнього пасажира з глухого села +40 км у бік</span>
-            </div>
-            <div class="nm-issue">
-              <span class="nm-i-icon">🔴</span>
-              <span>Зупинки без розкладу — «ще 5 хвилин» перетворюються на 40</span>
-            </div>
-            <div class="nm-issue">
-              <span class="nm-i-icon">🔴</span>
-              <span>Ви останній у маршруті — +6–10 годин до часу в дорозі</span>
-            </div>
-            <div class="nm-issue">
-              <span class="nm-i-icon">🔴</span>
-              <span>Невідомо де, коли і чому зупинились</span>
-            </div>
-            <div class="nm-issue">
-              <span class="nm-i-icon">🔴</span>
-              <span>Зайвий кілометраж — зайве паливо — зайвий час</span>
-            </div>
-            <div class="nm-waste">
-              <div class="nm-waste-num">+6–10<span>год</span></div>
-              <div class="nm-waste-lbl">втрачено<br>якщо ви останній</div>
-            </div>
-          </div>
-
-          <div class="nm-col nm-after">
-            <div class="nm-col-label">✨ Як у TransLine</div>
-            <div class="nm-win">
-              <span class="nm-w-icon">🟢</span>
-              <span>Тільки міста з населенням <strong>150 000+</strong> — жодного відхилення</span>
-            </div>
-            <div class="nm-win">
-              <span class="nm-w-icon">🟢</span>
-              <span>Розклад зупинок фіксований — ви знаєте час кожної точки</span>
-            </div>
-            <div class="nm-win">
-              <span class="nm-w-icon">🟢</span>
-              <span>Маршрут однаковий для всіх — перший ви чи останній</span>
-            </div>
-            <div class="nm-win">
-              <span class="nm-w-icon">🟢</span>
-              <span>Відхилення від траси — <strong>максимум 7 км</strong>, закріплено стандартом</span>
-            </div>
-            <div class="nm-win">
-              <span class="nm-w-icon">🟢</span>
-              <span>Автобан A4 / A17 / D1 — найшвидша дорога Європою</span>
-            </div>
-            <div class="nm-save">
-              <div class="nm-save-num">−3–10<span>год</span></div>
-              <div class="nm-save-lbl">економії<br>часу реально</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- INFOGRAPHIC ROUTE STRIP -->
-        <div class="nm-route-vis">
-          <div class="nm-route-label">Наш маршрут — лише великі міста:</div>
-          <div class="nm-cities-row">
-            <div class="nm-city-pill ua">🇺🇦<br><span>ІФ</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill ua">🇺🇦<br><span>Львів</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill bord">🚧<br><span>кордон</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill pl">🇵🇱<br><span>Краків</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill cz">🇨🇿<br><span>Прага</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill de">🇩🇪<br><span>Дрезден</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill de hl">🇩🇪<br><span>Мангайм</span></div>
-            <div class="nm-arrow">›</div>
-            <div class="nm-city-pill de">🇩🇪<br><span>Фрайбург</span></div>
-          </div>
-          <div class="nm-route-note">Відхилення від траси ≤ 7 км &nbsp;·&nbsp; Тільки великі міста &nbsp;·&nbsp; Жодних сіл</div>
-        </div>
-
-        <!-- STATS ROW -->
-        <div class="nm-stats-row">
-          <div class="nm-stat-box">
-            <div class="nm-stat-num">16</div>
-            <div class="nm-stat-lbl">міст на маршруті</div>
-          </div>
-          <div class="nm-stat-box">
-            <div class="nm-stat-num">≤7 км</div>
-            <div class="nm-stat-lbl">макс. відхилення</div>
-          </div>
-          <div class="nm-stat-box">
-            <div class="nm-stat-num">−10 год</div>
-            <div class="nm-stat-lbl">порівняно зі звичайними перевізниками</div>
-          </div>
-          <div class="nm-stat-box accent">
-            <div class="nm-stat-num">100%</div>
-            <div class="nm-stat-lbl">автобан без об'їздів</div>
-          </div>
-        </div>
-
-        <!-- TRUST QUOTE -->
-        <div class="nm-quote">
-          <div class="nm-quote-icon">💬</div>
-          <div class="nm-quote-text">
-            «Раніше їхала з Мангайму до Львова 36 годин. З TransLine — <strong>24 години</strong>. Різниця — це час, який я провела вдома з родиною, а не у чиємусь дворі посеред ночі.»
-          </div>
-          <div class="nm-quote-author">— Оксана, пасажир із Мангайму</div>
-        </div>
-
-      </div><!-- /nm-panel -->
-
-      <div class="map-header">
-        <div class="mh-title">🗺 Маршрут на карті</div>
-        <div class="mh-info" id="mapInfo">Оберіть міста для відображення маршруту</div>
-      </div>
-      <div id="map"></div>
-      <div class="map-footer">
-        <span class="mf-stat">Відстань: <strong id="mapDist">—</strong> &nbsp;|&nbsp; Час: <strong id="mapTime">—</strong></span>
-        <a id="gmapsLink" class="open-gmaps" href="#" target="_blank">Відкрити в Google Maps →</a>
-      </div>
     </div>
 
   </div>
