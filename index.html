@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -2156,7 +2157,11 @@ let logoClickCount = 0;
 let logoClickTimer = null;
 
 function handleLogoClick(){
-  // 5 кліків по логотипу відкривають PIN-вікно
+  // Одиночний клік — повернутись на головну
+  switchView('client');
+  goStep(1);
+
+  // 5 кліків підряд — відкрити PIN адміна
   logoClickCount++;
   clearTimeout(logoClickTimer);
   logoClickTimer = setTimeout(()=>{ logoClickCount=0; }, 2000);
