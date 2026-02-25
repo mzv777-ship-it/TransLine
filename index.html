@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -104,14 +105,12 @@ body{
 ═══════════════════════════ */
 .booking-layout{
   display:block;
-  width:100%;max-width:860px;
-  margin:0 auto;
-  padding:0 24px;
+  width:100%;
 }
 .booking-form-col{width:100%;}
 .booking-map-col{width:100%;}
 
-.bform{padding:32px 0 40px;}
+.bform{padding:0 48px 60px;}
 
 /* STEP BAR */
 .step-bar{display:flex;align-items:center;margin-bottom:36px;}
@@ -583,7 +582,7 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 .crm-gmaps-btn:hover{background:rgba(79,142,247,.16);}
 
 /* NEUROMARKETING PANEL */
-.nm-panel{padding:24px 0;display:flex;flex-direction:column;gap:16px;}
+.nm-panel{padding:40px 48px 32px;display:flex;flex-direction:column;gap:32px;}
 .nm-hero{
   background:linear-gradient(135deg,rgba(79,142,247,.1) 0%,rgba(122,174,255,.04) 100%);
   border:1px solid rgba(79,142,247,.2);border-radius:14px;
@@ -598,7 +597,7 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 .nm-headline{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:10px;letter-spacing:-.04em;}
 .nm-subheadline{font-size:14px;color:var(--sub);line-height:1.6;}
 .nm-subheadline strong{color:var(--accent);}
-.nm-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.nm-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:860px;}
 .nm-col{border:1px solid var(--b1);padding:12px;display:flex;flex-direction:column;gap:7px;}
 .nm-before{border-color:rgba(255,68,68,.12);}
 .nm-after{border-color:rgba(0,230,118,.12);}
@@ -631,10 +630,10 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 .nm-arrow{color:var(--muted);font-size:11px;}
 .nm-route-note{margin-top:7px;font-size:11px;color:var(--muted);font-weight:600;}
 
-.nm-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.nm-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--b2);border-radius:12px;overflow:hidden;max-width:860px;}
 .nm-stat-box{border:1px solid var(--b1);padding:11px 7px;text-align:center;}
 .nm-stat-box.accent{border-color:rgba(0,230,118,.18);}
-.nm-stat-num{font-size:20px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.1;}
+.nm-stat-num{font-size:22px;font-weight:900;color:var(--gold);font-family:'JetBrains Mono',monospace;line-height:1.1;}
 .nm-stat-box.accent .nm-stat-num{color:var(--accent2);}
 .nm-stat-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.3;}
 
@@ -693,11 +692,11 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
   .crm-layout{grid-template-columns:1fr;}
   .crm-detail{display:none;}
 }
+
 @media(max-width:600px){
-  .booking-layout{padding:0 14px;}
-}
-@media(max-width:600px){
-  .bform{padding:20px 16px 180px;}
+  .bform{padding:20px 20px 100px;}
+  .landing-hero{padding:28px 20px 24px;}
+  .nm-panel{padding:24px 20px;}
   .fgrid-2,.fgrid-3{grid-template-columns:1fr;}
   .city-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
   .topbar{padding:0 16px;}
@@ -707,25 +706,64 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
+/* ── LANDING HERO (full width) ── */
+.landing-hero{
+  width:100%;
+  background:linear-gradient(135deg,#0d1525 0%,#0f1a2e 50%,rgba(79,142,247,.08) 100%);
+  border-bottom:1px solid rgba(79,142,247,.15);
+  padding:48px 48px 40px;
+  position:relative;overflow:hidden;
+}
+.landing-hero::before{
+  content:'';position:absolute;top:-60px;right:-80px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(79,142,247,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.landing-hero-inner{max-width:860px;}
+.hero-pain-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(90deg,rgba(79,142,247,.2),rgba(122,174,255,.12));
+  border:1px solid rgba(79,142,247,.35);
+  color:var(--accent2);font-size:11px;font-weight:900;
+  letter-spacing:.1em;padding:5px 14px;border-radius:20px;
+  margin-bottom:18px;text-transform:uppercase;
+}
+.hero-pain-headline{font-size:34px;font-weight:900;line-height:1.15;margin-bottom:14px;letter-spacing:-.04em;}
+.hero-pain-headline em{color:var(--gold);font-style:normal;}
+.hero-pain-sub{font-size:16px;color:var(--sub);line-height:1.7;margin-bottom:20px;max-width:740px;}
+.hero-pain-sub strong{color:var(--accent);}
+.hero-pills-row{display:flex;flex-wrap:wrap;gap:8px;}
+.hero-pill{display:flex;align-items:center;gap:6px;border:1px solid var(--b2);padding:7px 14px;font-size:13px;font-weight:700;color:var(--sub);border-radius:6px;}
+.hero-pill.g{border-color:rgba(62,207,122,.3);color:var(--green);background:rgba(62,207,122,.06);}
+.hero-pill.r{border-color:rgba(255,68,68,.25);color:var(--red);background:rgba(255,68,68,.05);}
+
+/* ── NM PANEL sections (content sections) ── */
+.nm-section-wrap{
+  width:100%;padding:40px 48px;
+  border-bottom:1px solid var(--b1);
+}
+
 /* LANDING DIVIDER */
 .landing-divider{
-  border-top:1px solid var(--b1);
-  margin:8px 0 32px;
+  width:100%;height:1px;background:var(--b1);
 }
 /* Step bar sticky on landing */
 .step-bar{
   position:sticky;top:56px;
   background:var(--bg);
   z-index:100;
-  padding:14px 0;
-  margin-bottom:24px !important;
+  padding:14px 48px;
+  margin-bottom:0 !important;
   border-bottom:1px solid var(--b1);
+  width:100%;
+  box-sizing:border-box;
 }
 
 /* GMAPS CARD */
 .gmaps-card{
   border:1px solid var(--b2);border-radius:12px;
-  overflow:hidden;margin:0 0 8px;
+  overflow:hidden;margin:0;max-width:860px;
 }
 .gmc-header{
   display:flex;align-items:center;gap:12px;
@@ -852,11 +890,25 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
       <!-- NEUROMARKETING INFOGRAPHIC -->
       <div class="nm-panel" id="nmPanel">
 
-        <!-- HERO HOOK -->
-        <div class="nm-hero">
-          <div class="nm-hook-badge">🚀 ТІЛЬКИ У TRANSLINE</div>
-          <div class="nm-headline">Ваша поїздка більше не залежить від чужих зупинок</div>
-          <div class="nm-subheadline">Ми першими в Україні запровадили маршрут <strong>виключно по великих містах</strong> — без сіл, без об'їздів, без очікувань</div>
+        <!-- HERO SECTION (full width) -->
+        <div class="landing-hero">
+          <div class="landing-hero-inner">
+            <div class="hero-pain-badge">🚌 TransLine — новий стандарт</div>
+            <div class="hero-pain-headline">Втомились від поїздки через <em>чужі посилки і сусідні села?</em></div>
+            <div class="hero-pain-sub">
+              Більшість перевізників відхиляються від траси на <strong>15–30 км</strong> щоб завезти посилку або забрати пасажира з глухого кута.
+              Ви сидите у мікроавтобусі та чекаєте. У TransLine такого <strong>не буває ніколи.</strong>
+            </div>
+            <div class="hero-pills-row">
+              <div class="hero-pill r">🔴 Інші: +15–30 км об'їзди</div>
+              <div class="hero-pill r">🔴 Невідомо коли приїдете</div>
+              <div class="hero-pill r">🔴 Жодних зупинок за розкладом</div>
+              <div class="hero-pill g">✅ Тільки великі міста</div>
+              <div class="hero-pill g">✅ Відхилення ≤ 7 км</div>
+              <div class="hero-pill g">✅ Зупинки строго по 15 хв</div>
+              <div class="hero-pill g">✅ Заправки кожні 3 год</div>
+            </div>
+          </div>
         </div>
 
         <!-- PAIN vs GAIN comparison -->
@@ -1015,25 +1067,6 @@ td.price-col{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:7
 
         <!-- ── STEP 1: ROUTE + DATE ── -->
         <div id="step1" class="step-page active">
-
-          <!-- HERO PAIN POINT -->
-          <div class="hero-pain">
-            <div class="hero-pain-badge">🚌 TransLine — новий стандарт</div>
-            <div class="hero-pain-headline">Втомились від поїздки через <em>чужі посилки і сусідні села?</em></div>
-            <div class="hero-pain-sub">
-              Більшість перевізників відхиляються від траси на <strong>15–30 км</strong> щоб завезти посилку або забрати пасажира з глухого кута.
-              Ви сидите у мікроавтобусі та чекаєте. У TransLine такого <strong>не буває ніколи.</strong>
-            </div>
-            <div class="hero-pills-row">
-              <div class="hero-pill r">🔴 Інші: +15–30 км об'їзди</div>
-              <div class="hero-pill r">🔴 Невідомо коли приїдете</div>
-              <div class="hero-pill r">🔴 Жодних зупинок за розкладом</div>
-              <div class="hero-pill g">✅ Тільки великі міста</div>
-              <div class="hero-pill g">✅ Відхилення ≤ 7 км</div>
-              <div class="hero-pill g">✅ Зупинки строго по 15 хв</div>
-              <div class="hero-pill g">✅ Заправки кожні 3 год</div>
-            </div>
-          </div>
 
           <div class="fsec">
             <div class="fsec-title">🧭 Напрямок</div>
